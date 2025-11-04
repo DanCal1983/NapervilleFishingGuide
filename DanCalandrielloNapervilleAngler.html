@@ -57,7 +57,7 @@
                 <span class="mr-2 text-emerald-600">
                     <i data-lucide="sailboat" class="w-7 h-7"></i>
                 </span>
-                Dan Calandriello's Naperville Angler Pro Updates 2
+                Dan Calandriello's Naperville Angler Pro Updates 3
             </h1>
             <p class="text-gray-500 mt-2 text-sm">Real-time fishing intelligence powered by Gemini.</p>
         </header>
@@ -104,10 +104,9 @@
                 </div>
             </div>
 
-            <!-- FIXED: The P tag was missing here causing the 'Cannot set properties of null' error. -->
             <div id="error-message" class="hidden text-center p-6 bg-red-100 border border-red-300 rounded-lg mt-4">
                 <i data-lucide="alert-triangle" class="w-6 h-6 text-red-600 mx-auto mb-3"></i>
-                <p class="text-red-700 font-medium"></p> 
+                <p id="error-text" class="text-red-700 font-medium"></p> <!-- ADDED ID HERE -->
                 <p class="text-xs text-red-500 mt-1">Check the console for technical details.</p>
             </div>
         </div>
@@ -161,7 +160,8 @@
         const reportContent = document.getElementById('report-content');
         const sourcesList = document.getElementById('sources-list');
         const errorMessageDiv = document.getElementById('error-message');
-        const errorMessageP = errorMessageDiv.querySelector('p:first-child');
+        // UPDATED: Now referencing the element by its new direct ID
+        const errorMessageP = document.getElementById('error-text'); 
         
         // --- Utility Functions ---
 
@@ -184,7 +184,8 @@
             reportOutput.classList.add('hidden');
             initialMessage.classList.remove('hidden');
             errorMessageDiv.classList.add('hidden');
-            errorMessageP.textContent = '';
+            // FIX: This line now safely uses the ID referenced element
+            errorMessageP.textContent = ''; 
             reportContent.innerHTML = '';
             sourcesList.innerHTML = '';
         }
