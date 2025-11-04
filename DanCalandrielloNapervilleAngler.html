@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dan Calandriello - Naperville, Il Area Fishing App</title>
+    <title>Dan Calandriello - Naperville Fishing Guide</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
@@ -15,66 +15,27 @@
             font-family: 'Inter', sans-serif;
             background-color: #f0fdf4; /* Emerald 50 */
         }
-        
-        /* Removed original .report-section h3 styles since they are replaced by .accordion-header */
-
-        /* General report content styles */
-        .report-content p, .report-content ul, .report-content li {
+        .report-section h3 {
+            font-size: 1.25rem; /* text-xl */
+            font-weight: 700; /* font-bold */
+            color: var(--primary-color);
+            margin-top: 1rem;
+            border-bottom: 2px solid #a7f3d0; /* Emerald 200 */
+            padding-bottom: 0.25rem;
+        }
+        .report-section p, .report-section ul, .report-section li {
             font-size: 1rem;
             color: #374151; /* Gray 700 */
             margin-bottom: 0.5rem;
             line-height: 1.5;
         }
-        .report-content ul {
+        .report-section ul {
             list-style: disc;
             padding-left: 1.5rem;
         }
-        .report-content strong {
+        .report-section strong {
             font-weight: 600;
         }
-        
-        /* New Accordion Styles */
-        .accordion-item {
-            /* This is the container for one clickable section */
-            border-bottom: 2px solid #a7f3d0; /* Emerald 200 - matches old h3 border */
-            margin-top: 1rem;
-        }
-        .accordion-header {
-            /* This is the clickable headline */
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            padding: 0.5rem 0;
-            font-size: 1.25rem; /* text-xl */
-            font-weight: 700; /* font-bold */
-            color: var(--primary-color);
-            transition: color 0.15s;
-        }
-        .accordion-header:hover {
-             color: #047857; /* Emerald 700 */
-        }
-        .accordion-content {
-            /* This is the collapsible content area */
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out;
-            padding-top: 0;
-            padding-bottom: 0;
-        }
-        .accordion-content.open {
-            max-height: 5000px; /* Large value to allow content to fully expand */
-            padding-top: 0.5rem;
-            padding-bottom: 1rem;
-        }
-        .accordion-icon {
-            transition: transform 0.3s ease-out;
-        }
-        .accordion-header[aria-expanded="true"] .accordion-icon {
-            transform: rotate(180deg);
-        }
-
-        /* Loading Animation */
         .loading-icon {
             animation: spin 1s linear infinite;
         }
@@ -92,7 +53,7 @@
                 <span class="mr-2 text-emerald-600">
                     <i data-lucide="sailboat" class="w-7 h-7"></i>
                 </span>
-                Dan Calandriello's Naperville Angler Pro
+                Dan Calandriello's Naperville Angler Pro Updates 3
             </h1>
             <p class="text-gray-500 mt-2 text-sm">Real-time fishing intelligence powered by Gemini.</p>
         </header>
@@ -123,7 +84,7 @@
 
             <div id="report-output" class="hidden report-section p-6 bg-white border border-gray-200 rounded-xl shadow-lg">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Fishing Report</h2>
-                <div id="report-content" class="min-h-[100px] text-gray-700 space-y-3 report-content">
+                <div id="report-content" class="min-h-[100px] text-gray-700 space-y-3">
                     </div>
                 
                 <div class="mt-6 pt-4 border-t border-gray-100">
@@ -226,85 +187,31 @@
             sourcesList.innerHTML = '';
         }
 
-        /** Converts markdown to HTML, structuring h3 sections as accordions. */
+        /** Converts markdown to basic HTML for display */
         const markdownToHtml = (markdown) => {
-            // 1. Convert markdown to basic HTML (paragraphs, lists, strong)
             let html = markdown;
+            
+            // Convert headers (assuming level 3 for sections)
+            html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+            
+            // Convert unordered lists
+            html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
+            html = html.replace(/^(<li>.*<\/li>)$/gms, '<ul>$1</ul>');
             
             // Convert bold text
             html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             
-            // Temporary replacement for H3 and lists before paragraphing
-            html = html.replace(/^### (.*$)/gim, '<H3_TEMP>$1</H3_TEMP>');
-            html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
+            // Convert newlines to paragraphs
+            html = html.split('\n\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('');
             
-            // Convert newlines to paragraphs/ul/li structure
-            const lines = html.split('\n');
-            let finalHtml = '';
-            let inList = false;
+            // Remove remaining single newlines that aren't paragraph breaks
+            html = html.replace(/\n/g, ''); 
 
-            lines.forEach(line => {
-                line = line.trim();
-                if (!line) return;
-
-                if (line.startsWith('<H3_TEMP>')) {
-                    if (inList) {
-                        finalHtml += '</ul>';
-                        inList = false;
-                    }
-                    // Handle H3 - Create the accordion structure
-                    const title = line.replace(/<H3_TEMP>(.*)<\/H3_TEMP>/, '$1');
-                    finalHtml += `
-                        <div class="accordion-item">
-                            <div class="accordion-header" aria-expanded="false" aria-controls="content-${title.replace(/\W/g, '_')}" role="button" tabindex="0">
-                                <span>${title}</span>
-                                <i data-lucide="chevron-down" class="accordion-icon w-5 h-5"></i>
-                            </div>
-                            <div id="content-${title.replace(/\W/g, '_')}" class="accordion-content">
-                    `;
-                } else if (line.startsWith('<li>')) {
-                    if (!inList) {
-                        finalHtml += '<ul>';
-                        inList = true;
-                    }
-                    finalHtml += line;
-                } else {
-                    if (inList) {
-                        finalHtml += '</ul>';
-                        inList = false;
-                    }
-                    finalHtml += `<p>${line}</p>`;
-                }
-            });
+            // Clean up <ul>/<li> nesting issues from multi-step conversion
+            html = html.replace(/<\/p><ul>/g, '<ul>').replace(/<\/ul><p>/g, '</ul>');
+            html = html.replace(/<p><ul>/g, '<ul>').replace(/<\/ul><\/p>/g, '</ul>');
             
-            if (inList) {
-                finalHtml += '</ul>';
-            }
-
-            // 2. Close the accordion content divs properly (as there are four sections)
-            finalHtml += '</div></div>'.repeat(4);
-            
-            return finalHtml;
-        };
-        
-        /** Sets up click listeners for the accordion headers. */
-        const setupAccordionListeners = () => {
-            const headers = reportContent.querySelectorAll('.accordion-header');
-            headers.forEach(header => {
-                // Ensure the listener is added only once
-                if (header.hasAttribute('data-listener-added')) return;
-                
-                header.addEventListener('click', () => {
-                    const content = header.nextElementSibling;
-                    const isExpanded = header.getAttribute('aria-expanded') === 'true';
-
-                    // Toggle content class and attribute
-                    content.classList.toggle('open');
-                    header.setAttribute('aria-expanded', !isExpanded);
-                });
-                // Mark the header to prevent duplicate listeners
-                header.setAttribute('data-listener-added', 'true');
-            });
+            return html;
         };
         
         // NEW: Function to generate the Google Maps URL
@@ -312,7 +219,6 @@
             // Encode the destination for the URL query parameter
             const encodedDestination = encodeURIComponent(destination);
             // Google Maps URL format for directions to a destination
-            // Note: I've corrected the template literal for your previous logic to ensure it's a valid link structure.
             return `https://www.google.com/maps/dir/?api=1&destination=${encodedDestination}`;
         }
 
@@ -330,9 +236,9 @@
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }],
                 tools: [{ "google_search": {} }],
-                config: {
-                    systemInstruction: systemInstruction 
-                }
+                systemInstruction: {
+                    parts: [{ text: systemInstruction }]
+                },
             };
 
             for (let i = 0; i < maxRetries; i++) {
@@ -441,10 +347,7 @@
                 // 3. Update UI with Report
                 reportContent.innerHTML = markdownToHtml(text);
                 
-                // 4. Set up the accordion functionality
-                setupAccordionListeners();
-
-                // 5. Display Sources
+                // 4. Display Sources
                 sourcesList.innerHTML = sources.map((source, index) => `
                     <li>
                         <a href="${source.uri}" target="_blank" rel="noopener noreferrer" class="text-emerald-600 hover:text-emerald-800 hover:underline">
@@ -458,7 +361,7 @@
                 directionsLink.classList.remove('hidden'); 
 
             } catch (error) {
-                // 6. Handle Errors
+                // 5. Handle Errors
                 console.error("Report Generation Failed:", error);
                 
                 // Show the specific error message to the user
@@ -466,11 +369,11 @@
                 errorMessageDiv.classList.remove('hidden');
                 reportOutput.classList.add('hidden');
             } finally {
-                // 7. Reset UI State
+                // 6. Reset UI State
                 loadingState.classList.add('hidden');
                 generateBtn.disabled = false;
                 initialMessage.classList.add('hidden');
-                lucide.createIcons(); // Re-create icons, especially for the new chevron icons
+                lucide.createIcons(); // Re-create icons for dynamic content
             }
         };
 
