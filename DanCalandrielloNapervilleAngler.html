@@ -132,9 +132,10 @@
     </div>
 
 
-    <script type="module">
+       <script type="module">
         // Import necessary Firebase modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        // NOTE: Renamed initializeApp import to firebaseInitializeApp to avoid conflict.
+        import { initializeApp as firebaseInitializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
@@ -152,7 +153,11 @@
         const MODEL_NAME = "gemini-2.5-flash-preview-09-2025";
         const API_BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent`;
 
-        // Firebase Setup
+        // !!! YOUR HARDCODED API KEY IS HERE. ENSURE RESTRICTIONS ARE CORRECT !!!
+        // KEY USED: AIzaSyCD_8hmslFgp3noFeJ630koTYzE_vAsXrw
+        const apiKey = "AIzaSyCD_8hmslFgp3noFeJ630koTYzE_vAsXrw"; 
+        
+        // Firebase Setup (not strictly used for data, but auth is required for environment stability)
         let db;
         let auth;
         let userId = null;
@@ -233,7 +238,7 @@
         const callGeminiAPI = async (prompt, systemInstruction) => {
             const maxRetries = 5;
             let delay = 1000;
-            const apiKey = "AIzaSyCD_8hmslFgp3noFeJ630koTYzE_vAsXrw"; // Canvas provides API key at runtime
+            
 
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }],
@@ -245,6 +250,7 @@
 
             for (let i = 0; i < maxRetries; i++) {
                 try {
+                    // Use the hardcoded API key
                     const response = await fetch(`${API_BASE_URL}?key=${apiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -258,6 +264,7 @@
                             continue;
                         }
                         const errorBody = await response.json();
+                        // This error object usually contains the detailed reason (e.g., Referer Blocked)
                         throw new Error(`API Error: ${response.status} - ${errorBody.error?.message || 'Unknown error'}`);
                     }
 
@@ -297,8 +304,8 @@
 
         // --- Main Application Logic ---
 
-        /** Initializes Firebase, populates the spot list, and sets up listeners. */
-        const initializeApp = async () => {
+        /** Initializes the application, previously named initializeApp (now renamed to initApp) to avoid conflict. */
+        const initApp = async () => { // <--- RENAMED FUNCTION HERE
             // Populate select box
             spotSelect.innerHTML = FISHING_SPOTS.map(spot => 
                 `<option value="${spot}">${spot}</option>`
@@ -306,7 +313,8 @@
             
             // Initialize Firebase services
             if (firebaseConfig) {
-                const app = initializeApp(firebaseConfig);
+                // Uses the renamed import
+                const app = firebaseInitializeApp(firebaseConfig); 
                 auth = getAuth(app);
                 db = getFirestore(app);
                 setLogLevel('error');
@@ -317,21 +325,21 @@
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
                 } else {
-                    await signInAnonymously(auth);
+                    // Fallback to anonymous sign-in
+                    await signInAnonymously(auth); 
                 }
             } catch (error) {
                 console.error("Firebase Auth Error:", error);
-                showModal("Authentication Error", "Could not sign in to Firebase. Data persistence may not work.");
+                // Non-critical error, app can continue
             }
             
-            // Set up Auth Listener (though we aren't using Firestore for this app, it's good practice)
+            // Set up Auth Listener
             onAuthStateChanged(auth, (user) => {
                 if (user) {
                     userId = user.uid;
                 } else {
-                    userId = crypto.randomUUID(); // Fallback for unauthenticated/anonymous
+                    userId = crypto.randomUUID(); 
                 }
-                console.log("Current user ID:", userId);
             });
 
             // Set up event listener
@@ -358,10 +366,11 @@
 
             const systemPrompt = "You are a local Illinois fishing expert providing an advisory report. Analyze information and provide a concise, structured report in plain Markdown format using the following headings: '### Current Weather & Conditions', '### Primary Fish Species', '### Recommended Baits for November', and '### Estimated Water Depth/Characteristics'. Do not use conversational filler or intros. Only output the Markdown content.";
             
-            // Determine current month dynamically, but since this is a static script, I'll use a specific month for consistency in the prompt.
-            const currentMonth = "November 2025"; 
+            // Use current month for context
+            const now = new Date();
+            const currentMonth = now.toLocaleString('en-US', { month: 'long', year: 'numeric' });
             
-            const userQuery = `Provide a detailed fishing report for the spot: "${selectedSpot}" near Naperville, Illinois. The current month is ${currentMonth}. The report MUST include the following structured sections: 'Current Weather & Conditions', 'Primary Fish Species', 'Recommended Baits for November', and 'Estimated Water Depth/Characteristics'. Use information grounded in real-time search results.`;
+            const userQuery = `Provide a detailed fishing report for the spot: "${selectedSpot}" near Naperville, Illinois. The current month is ${currentMonth}. The report MUST include the following structured sections: 'Current Weather & Conditions', 'Primary Fish Species', 'Recommended Baits for ${currentMonth}', and 'Estimated Water Depth/Characteristics'. Use information grounded in real-time search results.`;
 
             try {
                 // 2. Call Gemini API
@@ -384,7 +393,9 @@
             } catch (error) {
                 // 5. Handle Errors
                 console.error("Report Generation Failed:", error);
-                errorMessageP.textContent = `Error: ${error.message}`;
+                
+                // Show the specific error message to the user
+                errorMessageP.textContent = `Report failed. Error: ${error.message}`;
                 errorMessageDiv.classList.remove('hidden');
                 reportOutput.classList.add('hidden');
             } finally {
@@ -397,7 +408,7 @@
         };
 
         // Initialize on load
-        window.onload = initializeApp;
+        window.onload = initApp; // <--- CALLS THE RENAMED FUNCTION
 
     </script>
 </body>
