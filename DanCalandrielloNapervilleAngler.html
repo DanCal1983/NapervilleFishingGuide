@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dan Calandriello - Naperville Fishing Guide</title>
-    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Load Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -51,23 +48,20 @@
 <body class="min-h-screen p-4 sm:p-6 flex flex-col items-center">
 
     <div class="w-full max-w-2xl bg-white shadow-xl rounded-xl p-6 md:p-8">
-        <!-- Header -->
         <header class="mb-6 text-center">
             <h1 class="text-3xl font-extrabold text-gray-900 flex items-center justify-center">
                 <span class="mr-2 text-emerald-600">
                     <i data-lucide="sailboat" class="w-7 h-7"></i>
                 </span>
-                Dan Calandriello's Naperville Angler Pro Updates 3
+                Dan Calandriello's Naperville Angler Pro Updates 4
             </h1>
             <p class="text-gray-500 mt-2 text-sm">Real-time fishing intelligence powered by Gemini.</p>
         </header>
 
-        <!-- Selection Area -->
         <div class="space-y-4 mb-8 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
             <label for="fishing-spot" class="block text-sm font-medium text-gray-700">Select a Fishing Spot in or near Naperville, IL:</label>
             <select id="fishing-spot" class="mt-1 block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md shadow-sm transition duration-150 ease-in-out">
-                <!-- Options populated by JS -->
-            </select>
+                </select>
             <button id="generate-report-btn"
                 class="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-lg shadow-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-500 focus:ring-opacity-50 transition duration-150 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed"
                 type="button">
@@ -76,7 +70,6 @@
             </button>
         </div>
 
-        <!-- Report Display Area -->
         <div id="report-container" class="mt-8">
             <div id="loading-state" class="hidden text-center p-8 bg-gray-50 rounded-xl shadow-inner">
                 <i data-lucide="loader-circle" class="loading-icon w-8 h-8 text-emerald-600 mx-auto mb-3"></i>
@@ -92,28 +85,30 @@
             <div id="report-output" class="hidden report-section p-6 bg-white border border-gray-200 rounded-xl shadow-lg">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Fishing Report</h2>
                 <div id="report-content" class="min-h-[100px] text-gray-700 space-y-3">
-                    <!-- Report content will be injected here -->
+                    </div>
+                
+                <div class="mt-6 pt-4 border-t border-gray-100">
+                    <a id="directions-link" href="#" target="_blank" rel="noopener noreferrer" 
+                       class="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-lg shadow-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50 transition duration-150 ease-in-out">
+                        <i data-lucide="map" class="w-5 h-5 mr-2"></i>
+                        Get Google Maps Directions
+                    </a>
                 </div>
-
-                <!-- Sources -->
                 <div id="sources-container" class="mt-6 pt-4 border-t border-gray-100">
                     <p class="text-xs font-semibold text-gray-500 mb-2">Sources:</p>
                     <ul id="sources-list" class="text-xs text-gray-500 space-y-1">
-                        <!-- Sources will be injected here -->
-                    </ul>
+                        </ul>
                 </div>
             </div>
 
             <div id="error-message" class="hidden text-center p-6 bg-red-100 border border-red-300 rounded-lg mt-4">
                 <i data-lucide="alert-triangle" class="w-6 h-6 text-red-600 mx-auto mb-3"></i>
-                <p id="error-text" class="text-red-700 font-medium"></p> <!-- ADDED ID HERE -->
-                <p class="text-xs text-red-500 mt-1">Check the console for technical details.</p>
+                <p id="error-text" class="text-red-700 font-medium"></p> <p class="text-xs text-red-500 mt-1">Check the console for technical details.</p>
             </div>
         </div>
 
     </div>
 
-    <!-- Modals -->
     <div id="modal-backdrop" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-40"></div>
     <div id="alert-modal" class="fixed inset-0 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 transform transition-all duration-300 scale-100">
@@ -162,7 +157,9 @@
         const errorMessageDiv = document.getElementById('error-message');
         // UPDATED: Now referencing the element by its new direct ID
         const errorMessageP = document.getElementById('error-text'); 
-        
+        // NEW: Directions Link Element
+        const directionsLink = document.getElementById('directions-link');
+
         // --- Utility Functions ---
 
         /** Shows a custom modal alert instead of window.alert */
@@ -216,6 +213,15 @@
             
             return html;
         };
+        
+        // NEW: Function to generate the Google Maps URL
+        const generateDirectionsLink = (destination) => {
+            // Encode the destination for the URL query parameter
+            const encodedDestination = encodeURIComponent(destination);
+            // Google Maps URL format for directions to a destination
+            return `https://www.google.com/maps/dir/?api=1&destination=${encodedDestination}`;
+        }
+
 
         /**
          * Calls the Gemini API with exponential backoff and search grounding.
@@ -265,9 +271,9 @@
                         if (groundingMetadata && groundingMetadata.groundingAttributions) {
                             sources = groundingMetadata.groundingAttributions
                                 .map(attribution => ({
-                                    uri: attribution.web?.uri,
-                                    title: attribution.web?.title,
-                                }))
+                                        uri: attribution.web?.uri,
+                                        title: attribution.web?.title,
+                                    }))
                                 .filter(source => source.uri && source.title);
                         }
 
@@ -318,6 +324,13 @@
             reportOutput.classList.add('hidden');
             loadingState.classList.remove('hidden');
             generateBtn.disabled = true;
+            
+            // NEW: Hide the directions link while loading
+            directionsLink.classList.add('hidden');
+
+            // NEW: Set the directions link URL immediately
+            directionsLink.href = generateDirectionsLink(selectedSpot);
+
 
             const systemPrompt = "You are a local Illinois fishing expert providing an advisory report. Analyze information and provide a concise, structured report in plain Markdown format using the following headings: '### Current Weather & Conditions', '### Primary Fish Species', '### Recommended Baits for November', and '### Estimated Water Depth/Characteristics'. Do not use conversational filler or intros. Only output the Markdown content.";
             
@@ -344,6 +357,8 @@
                 `).join('');
                 
                 reportOutput.classList.remove('hidden');
+                // NEW: Show the directions link after the report is successful
+                directionsLink.classList.remove('hidden'); 
 
             } catch (error) {
                 // 5. Handle Errors
