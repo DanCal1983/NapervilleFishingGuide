@@ -57,7 +57,7 @@
                 <span class="mr-2 text-emerald-600">
                     <i data-lucide="sailboat" class="w-7 h-7"></i>
                 </span>
-                Dan Calandriello's Naperville Angler Pro
+                Dan Calandriello's Naperville Angler Pro Updates 1
             </h1>
             <p class="text-gray-500 mt-2 text-sm">Real-time fishing intelligence powered by Gemini.</p>
         </header>
@@ -132,12 +132,9 @@
     </div>
 
 
-       <script type="module">
-        // Import necessary Firebase modules
-        // NOTE: Renamed initializeApp import to firebaseInitializeApp to avoid conflict.
-        import { initializeApp as firebaseInitializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script type="module">
+        // NOTE: All Firebase/Auth imports and logic have been removed as they are not needed 
+        // for this standalone app and caused errors in the GitHub Pages environment.
         
         // --- Global Variables and Configuration ---
         const FISHING_SPOTS = [
@@ -153,18 +150,10 @@
         const MODEL_NAME = "gemini-2.5-flash-preview-09-2025";
         const API_BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent`;
 
-        // !!! YOUR HARDCODED API KEY IS HERE. ENSURE RESTRICTIONS ARE CORRECT !!!
+        // !!! YOUR HARDCODED API KEY IS HERE. THIS IS REQUIRED FOR GITHUB HOSTING. !!!
         // KEY USED: AIzaSyCD_8hmslFgp3noFeJ630koTYzE_vAsXrw
         const apiKey = "AIzaSyCD_8hmslFgp3noFeJ630koTYzE_vAsXrw"; 
         
-        // Firebase Setup (not strictly used for data, but auth is required for environment stability)
-        let db;
-        let auth;
-        let userId = null;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
         // --- DOM Elements ---
         const spotSelect = document.getElementById('fishing-spot');
         const generateBtn = document.getElementById('generate-report-btn');
@@ -239,7 +228,6 @@
             const maxRetries = 5;
             let delay = 1000;
             
-
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }],
                 tools: [{ "google_search": {} }],
@@ -264,7 +252,6 @@
                             continue;
                         }
                         const errorBody = await response.json();
-                        // This error object usually contains the detailed reason (e.g., Referer Blocked)
                         throw new Error(`API Error: ${response.status} - ${errorBody.error?.message || 'Unknown error'}`);
                     }
 
@@ -304,44 +291,13 @@
 
         // --- Main Application Logic ---
 
-        /** Initializes the application, previously named initializeApp (now renamed to initApp) to avoid conflict. */
-        const initApp = async () => { // <--- RENAMED FUNCTION HERE
+        /** Initializes the application. */
+        const initApp = async () => { 
             // Populate select box
             spotSelect.innerHTML = FISHING_SPOTS.map(spot => 
                 `<option value="${spot}">${spot}</option>`
             ).join('');
             
-            // Initialize Firebase services
-            if (firebaseConfig) {
-                // Uses the renamed import
-                const app = firebaseInitializeApp(firebaseConfig); 
-                auth = getAuth(app);
-                db = getFirestore(app);
-                setLogLevel('error');
-            }
-
-            // Authentication
-            try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    // Fallback to anonymous sign-in
-                    await signInAnonymously(auth); 
-                }
-            } catch (error) {
-                console.error("Firebase Auth Error:", error);
-                // Non-critical error, app can continue
-            }
-            
-            // Set up Auth Listener
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    userId = user.uid;
-                } else {
-                    userId = crypto.randomUUID(); 
-                }
-            });
-
             // Set up event listener
             generateBtn.addEventListener('click', generateReport);
             
@@ -408,10 +364,8 @@
         };
 
         // Initialize on load
-        window.onload = initApp; // <--- CALLS THE RENAMED FUNCTION
+        window.onload = initApp; 
 
     </script>
 </body>
 </html>
-
-
