@@ -204,41 +204,44 @@
         }
 
         /** Converts markdown to basic HTML for display */
-        const markdownToHtml = (markdown) => {
-            let html = markdown;
-            
-            // Convert headers (assuming level 3 for sections)
-            html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-            
-            // Convert unordered lists
-            html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
-            html = html.replace(/^(<li>.*<\/li>)$/gms, '<ul>$1</ul>');
-            
-            // Convert bold text
-            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-			
-			// --- START of LaTeX Cleanup ---
-			
-			// 1. Remove $...$ math delimiters
-			html = html.replace(/\$(.*?)\$/g, '$1');
-			// 2. Remove \text{...} commands (for units like F, C)
-			html = html.replace(/\\text{([^{}]*)}/g, '$1');
-			// 3. Convert \circ (degree symbol)
-			html = html.replace(/\\circ/g, '°');
-			// --- END of LaTeX Cleanup ---
-			
-			// Convert newlines to paragraphs
-            html = html.split('\n\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('');
-            
-            // Remove remaining single newlines that aren't paragraph breaks
-            html = html.replace(/\n/g, ''); 
+	const markdownToHtml = (markdown) => {
+    let html = markdown;
+    
+    // Convert headers (assuming level 3 for sections)
+    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+    
+    // Convert unordered lists
+    html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
+    html = html.replace(/^(<li>.*<\/li>)$/gms, '<ul>$1</ul>');
+    
+    // Convert bold text
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // --- START of LaTeX Cleanup ---
+    
+    // 1. Remove $...$ math delimiters
+    html = html.replace(/\$(.*?)\$/g, '$1');
+    // 2. Remove \text{...} commands (for units like F, C)
+    html = html.replace(/\\text{([^{}]*)}/g, '$1');
+    // 3. Convert \circ (degree symbol)
+    html = html.replace(/\\circ/g, '°');
+    // 4. Remove ^{...} superscript delimiters <-- NEW LINE ADDED
+    html = html.replace(/\^\{([^{}]*)\}/g, '$1'); 
+    
+    // --- END of LaTeX Cleanup ---
+    
+    // Convert newlines to paragraphs
+    html = html.split('\n\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('');
+    
+    // Remove remaining single newlines that aren't paragraph breaks
+    html = html.replace(/\n/g, ''); 
 
-            // Clean up <ul>/<li> nesting issues from multi-step conversion
-            html = html.replace(/<\/p><ul>/g, '<ul>').replace(/<\/ul><p>/g, '</ul>');
-            html = html.replace(/<p><ul>/g, '<ul>').replace(/<\/ul><\/p>/g, '</ul>');
-            
-            return html;
-        };
+    // Clean up <ul>/<li> nesting issues from multi-step conversion
+    html = html.replace(/<\/p><ul>/g, '<ul>').replace(/<\/ul><p>/g, '</ul>');
+    html = html.replace(/<p><ul>/g, '<ul>').replace(/<\/ul><\/p>/g, '</ul>');
+    
+    return html;
+};
         
         // NEW: Function to generate the Google Maps URL
         const generateDirectionsLink = (destination) => {
