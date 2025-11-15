@@ -151,6 +151,7 @@
 			"Pathways Pond (Bolingbrook, Illinois)",
 			"Silver Lake, Sand Pond (Blackwell Forest Preserve, Warrenville, Il)",
 			"Tall Grass Lakes Ponds",
+			"The Pond at Brook Crossings, 95th St. Naperville (Goose Lake)",
 			"West Branch DuPage River (McDowell Grove area)",
 			"Whalon Lake (Naperville/Bolingbrook)",
 			"Winding Creek Park Pond, Naperville Illinois",
@@ -212,72 +213,19 @@
     // Convert headers (assuming level 3 for sections)
     html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
     
+    // Convert unordered lists
+    html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
+    html = html.replace(/^(<li>.*<\/li>)$/gms, '<ul>$1</ul>');
+    
     // Convert bold text
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     
-    // --- NEW: Markdown Table Conversion ---
-    const lines = html.split('\n');
-    let inTable = false;
-    let tableHtml = [];
-    
-    // Process lines for tables
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        
-        // 1. Check for table header line (starts a table)
-        if (line.startsWith('|') && !inTable) {
-            inTable = true;
-            tableHtml.push('<table class="min-w-full divide-y divide-gray-300 mt-2 text-sm">');
-            
-            // Start Header Row
-            tableHtml.push('<thead class="bg-gray-50"><tr>');
-            // Extract column titles, skipping the first and last empty split parts
-            const headers = line.split('|').slice(1, -1).map(h => h.trim());
-            headers.forEach(h => tableHtml.push(`<th class="px-2 py-2 text-left font-semibold text-gray-900">${h}</th>`));
-            tableHtml.push('</tr></thead><tbody class="divide-y divide-gray-200">');
-            continue;
-        }
-        
-        // 2. Check for separator line (ignore but confirms table is active)
-        if (inTable && line.startsWith('|') && line.includes(':---')) {
-            continue; // Skip the separator line
-        }
-        
-        // 3. Check for table body row
-        if (inTable && line.startsWith('|')) {
-            tableHtml.push('<tr>');
-            const cells = line.split('|').slice(1, -1).map(c => c.trim());
-            cells.forEach(c => tableHtml.push(`<td class="whitespace-nowrap px-2 py-2 text-gray-600">${c}</td>`));
-            tableHtml.push('</tr>');
-            continue;
-        }
-        
-        // 4. End the table if we hit an empty line after the header/separator
-        if (inTable && !line) {
-            inTable = false;
-            tableHtml.push('</tbody></table>');
-        }
-        
-        // If not in a table, or if table ended, add the line back to HTML array
-        if (!inTable) {
-            tableHtml.push(lines[i]);
-        }
-    }
-    
-    // Rejoin the lines, now including table HTML
-    html = tableHtml.join('\n');
-    // --- END NEW: Markdown Table Conversion ---
-
-    // Convert unordered lists
-    // Note: The conversion below must happen after bolding and before paragraph breaks
-    html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
-    html = html.replace(/^(<li>.*<\/li>)$/gms, '<ul>$1</ul>');
-
     // --- START of LaTeX Cleanup (This is the critical area) ---
     
     // 1. Remove $...$ math delimiters
     html = html.replace(/\$(.*?)\$/g, '$1');
     // 2. Convert common LaTeX degree symbols, like \circ F or \circ C
+// *** CRITICAL UPDATE on next line: Correcting for various formats like \circ, \degree, \text{F}, etc. ***
 // This covers '\circ', '\degree', and removes '\text{}' and '\unit{}' wrappers.
     html = html.replace(/\\(circ|degree|text|unit)\{?([F C \s]*)?\}?/gi, (match, p1, p2) => {
         if (p1.toLowerCase() === 'circ' || p1.toLowerCase() === 'degree') {
