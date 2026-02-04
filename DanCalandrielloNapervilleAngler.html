@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <!-- Google tag (gtag.js) -->
    <script async src="https://www.googletagmanager.com/gtag/js?id=G-TCW5J75HN1"></script>
    <script>
    window.dataLayer = window.dataLayer || [];
@@ -68,9 +67,17 @@
         </header>
 
         <div class="space-y-4 mb-8 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-            <label for="fishing-spot" class="block text-sm font-medium text-gray-700">Select a Fishing Spot in or around Naperville, IL:</label>
-            <select id="fishing-spot" class="mt-1 block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md shadow-sm transition duration-150 ease-in-out">
-                </select>
+            <div class="flex flex-col sm:flex-row justify-between items-end gap-2">
+                <div class="w-full">
+                    <label for="fishing-spot" class="block text-sm font-medium text-gray-700">Select a Fishing Spot:</label>
+                    <select id="fishing-spot" class="mt-1 block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md shadow-sm transition duration-150 ease-in-out">
+                    </select>
+                </div>
+                <button id="geo-btn" class="w-full sm:w-auto flex items-center justify-center px-4 py-3 bg-white border border-emerald-300 text-emerald-700 rounded-lg hover:bg-emerald-100 transition shadow-sm whitespace-nowrap">
+                    <i data-lucide="map-pin" class="w-4 h-4 mr-2"></i> Find Nearest
+                </button>
+            </div>
+
             <button id="generate-report-btn"
                 class="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-lg shadow-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-500 focus:ring-opacity-50 transition duration-150 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed"
                 type="button">
@@ -89,7 +96,7 @@
             <div id="initial-message" class="text-center p-6 bg-blue-50 border border-blue-200 rounded-lg">
                 <i data-lucide="info" class="w-6 h-6 text-blue-600 mx-auto mb-3"></i>
                 <p class="text-blue-700">Select a location above and click 'Generate Fishing Report' to get started!</p><br>
-				<p class="text-blue-700">Dan Calandriello &copy;2025</p>
+				<p class="text-blue-700">Dan Calandriello ©2025</p>
             </div>
 
             <div id="report-output" class="hidden report-section p-6 bg-white border border-gray-200 rounded-xl shadow-lg">
@@ -105,7 +112,7 @@
                     </a>
                 </div>
                 <div id="sources-container" class="mt-6 pt-4 border-t border-gray-100">
-                    <p class="text-xs font-semibold text-gray-500 mb-2">To get a report on a second location, just use the drop down menu to select a new location and click "Generate Fishing Report".<br><br>Dan Calandriello &copy;2025</p>
+                    <p class="text-xs font-semibold text-gray-500 mb-2">To get a report on a second location, just use the drop down menu to select a new location and click "Generate Fishing Report".<br><br>Dan Calandriello ©2025</p>
                     <ul id="sources-list" class="text-xs text-gray-500 space-y-1">
                         </ul>
                 </div>
@@ -138,7 +145,6 @@
 
 
     <script type="module">
-        // --- Global Variables and Configuration ---
         const FISHING_SPOTS = [
 	    	"Arrowhead Pond Park, (Bolingbrook, Illinois)",
 			"Blackhawk Pond Park, (Bolingbrook Illinois)",
@@ -158,31 +164,22 @@
 			"Winding Creek Park Pond, Naperville Illinois",
         ];
         
-        // Gemini API Configuration
         const MODEL_NAME = "gemini-2.5-flash-preview-09-2025";
         const API_BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent`;
-
-        // !!! YOUR HARDCODED API KEY IS HERE. THIS IS REQUIRED FOR GITHUB HOSTING. !!!
-        // KEY USED: AIzaSyCD_8hmslFgp3noFeJ630koTYzE_vAsXrw
         const apiKey = "AIzaSyCD_8hmslFgp3noFeJ630koTYzE_vAsXrw"; 
         
-        // --- DOM Elements ---
         const spotSelect = document.getElementById('fishing-spot');
         const generateBtn = document.getElementById('generate-report-btn');
+        const geoBtn = document.getElementById('geo-btn');
         const loadingState = document.getElementById('loading-state');
         const initialMessage = document.getElementById('initial-message');
         const reportOutput = document.getElementById('report-output');
         const reportContent = document.getElementById('report-content');
         const sourcesList = document.getElementById('sources-list');
         const errorMessageDiv = document.getElementById('error-message');
-        // UPDATED: Now referencing the element by its new direct ID
         const errorMessageP = document.getElementById('error-text'); 
-        // NEW: Directions Link Element
         const directionsLink = document.getElementById('directions-link');
 
-        // --- Utility Functions ---
-
-        /** Shows a custom modal alert instead of window.alert */
         window.showModal = (title, body) => {
             document.getElementById('modal-title').textContent = title;
             document.getElementById('modal-body').textContent = body;
@@ -190,238 +187,181 @@
             document.getElementById('modal-backdrop').classList.remove('hidden');
         };
 
-        /** Closes the custom modal alert */
         window.closeModal = () => {
             document.getElementById('alert-modal').classList.add('hidden');
             document.getElementById('modal-backdrop').classList.add('hidden');
         };
 
-        /** Clears the report and error areas */
         const clearReports = () => {
             reportOutput.classList.add('hidden');
             initialMessage.classList.remove('hidden');
             errorMessageDiv.classList.add('hidden');
-            // FIX: This line now safely uses the ID referenced element
             errorMessageP.textContent = ''; 
             reportContent.innerHTML = '';
             sourcesList.innerHTML = '';
         }
 
-        /** Converts markdown to basic HTML for display */
-	const markdownToHtml = (markdown) => {
-    let html = markdown;
-    
-    // Convert headers (assuming level 3 for sections)
-    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-    
-    // Convert unordered lists
-    html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
-    html = html.replace(/^(<li>.*<\/li>)$/gms, '<ul>$1</ul>');
-    
-    // Convert bold text
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-    // --- START of LaTeX Cleanup (This is the critical area) ---
-    
-    // 1. Remove $...$ math delimiters
-    html = html.replace(/\$(.*?)\$/g, '$1');
-    // 2. Convert common LaTeX degree symbols, like \circ F or \circ C
-// *** CRITICAL UPDATE on next line: Correcting for various formats like \circ, \degree, \text{F}, etc. ***
-// This covers '\circ', '\degree', and removes '\text{}' and '\unit{}' wrappers.
-    html = html.replace(/\\(circ|degree|text|unit)\{?([F C \s]*)?\}?/gi, (match, p1, p2) => {
-        if (p1.toLowerCase() === 'circ' || p1.toLowerCase() === 'degree') {
-            return '°' + (p2 ? p2.trim() : ''); // Convert \circ or \degree to °
-        }
-        return p2 ? p2.trim() : ''; // Remove \text{} or \unit{} wrappers
-    });
-    // Fallback for the simpler \circ (if it appears alone)
-    html = html.replace(/\\circ/g, '°');
-
-    // 3. Remove ^{...} and _{...} delimiters (superscript/subscript which may remain)
-    html = html.replace(/[\^_]\{([^{}]*)\}/g, '$1'); 
-    
-    // --- END of LaTeX Cleanup ---
-    
-    // Convert newlines to paragraphs
-    html = html.split('\n\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('');
-    
-    // Remove remaining single newlines that aren't paragraph breaks
-    html = html.replace(/\n/g, ''); 
-
-    // Clean up <ul>/<li> nesting issues from multi-step conversion
-    html = html.replace(/<\/p><ul>/g, '<ul>').replace(/<\/ul><p>/g, '</ul>');
-    html = html.replace(/<p><ul>/g, '<ul>').replace(/<\/ul><\/p>/g, '</ul>');
-    
-    return html;
-};
+	    const markdownToHtml = (markdown) => {
+            let html = markdown;
+            html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+            html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
+            html = html.replace(/^(<li>.*<\/li>)$/gms, '<ul>$1</ul>');
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/\$(.*?)\$/g, '$1');
+            html = html.replace(/\\(circ|degree|text|unit)\{?([F C \s]*)?\}?/gi, (match, p1, p2) => {
+                if (p1.toLowerCase() === 'circ' || p1.toLowerCase() === 'degree') {
+                    return '°' + (p2 ? p2.trim() : ''); 
+                }
+                return p2 ? p2.trim() : '';
+            });
+            html = html.replace(/\\circ/g, '°');
+            html = html.replace(/[\^_]\{([^{}]*)\}/g, '$1'); 
+            html = html.split('\n\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('');
+            html = html.replace(/\n/g, ''); 
+            html = html.replace(/<\/p><ul>/g, '<ul>').replace(/<\/ul><p>/g, '</ul>');
+            html = html.replace(/<p><ul>/g, '<ul>').replace(/<\/ul><\/p>/g, '</ul>');
+            return html;
+        };
         
-        // NEW: Function to generate the Google Maps URL
         const generateDirectionsLink = (destination) => {
-            // Encode the destination for the URL query parameter
             const encodedDestination = encodeURIComponent(destination);
-            // Google Maps URL format for directions to a destination
             return `https://www.google.com/maps/dir/?api=1&destination=${encodedDestination}`;
         }
 
-
-        /**
-         * Calls the Gemini API with exponential backoff and search grounding.
-         * @param {string} prompt The user query for the model.
-         * @param {string} systemInstruction The role/persona for the model.
-         * @returns {Promise<{text: string, sources: Array<{uri: string, title: string}>}>}
-         */
         const callGeminiAPI = async (prompt, systemInstruction) => {
             const maxRetries = 5;
             let delay = 1000;
-            
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }],
                 tools: [{ "google_search": {} }],
-                systemInstruction: {
-                    parts: [{ text: systemInstruction }]
-                },
+                systemInstruction: { parts: [{ text: systemInstruction }] },
             };
 
             for (let i = 0; i < maxRetries; i++) {
                 try {
-                    // Use the hardcoded API key
                     const response = await fetch(`${API_BASE_URL}?key=${apiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
-
                     if (!response.ok) {
                         if (response.status === 429 && i < maxRetries - 1) {
                             await new Promise(resolve => setTimeout(resolve, delay));
-                            delay *= 2;
-                            continue;
+                            delay *= 2; continue;
                         }
                         const errorBody = await response.json();
                         throw new Error(`API Error: ${response.status} - ${errorBody.error?.message || 'Unknown error'}`);
                     }
-
                     const result = await response.json();
                     const candidate = result.candidates?.[0];
-
                     if (candidate && candidate.content?.parts?.[0]?.text) {
                         const text = candidate.content.parts[0].text;
                         let sources = [];
                         const groundingMetadata = candidate.groundingMetadata;
-                        
                         if (groundingMetadata && groundingMetadata.groundingAttributions) {
                             sources = groundingMetadata.groundingAttributions
-                                .map(attribution => ({
-                                        uri: attribution.web?.uri,
-                                        title: attribution.web?.title,
-                                    }))
-                                .filter(source => source.uri && source.title);
+                                .map(attr => ({ uri: attr.web?.uri, title: attr.web?.title }))
+                                .filter(s => s.uri && s.title);
                         }
-
                         return { text, sources };
-                    } else {
-                        throw new Error("Received an empty or malformed response from the model.");
-                    }
-
+                    } else { throw new Error("Empty response from model."); }
                 } catch (error) {
-                    console.error("Gemini API call failed:", error);
-                    if (i === maxRetries - 1) {
-                        throw new Error("Failed to connect to the fishing intelligence system. Please try again later.");
-                    }
+                    if (i === maxRetries - 1) throw error;
                     await new Promise(resolve => setTimeout(resolve, delay));
                     delay *= 2;
                 }
             }
         };
 
-
-        // --- Main Application Logic ---
-
-        /** Initializes the application. */
-        const initApp = async () => { 
-            // Populate select box
-            spotSelect.innerHTML = FISHING_SPOTS.map(spot => 
-                `<option value="${spot}">${spot}</option>`
-            ).join('');
-            
-            // Set up event listener
-            generateBtn.addEventListener('click', generateReport);
-            
-            // Initialize icons
-            lucide.createIcons();
-        };
-
-        /** Handles the full report generation process. */
         const generateReport = async () => {
             const selectedSpot = spotSelect.value;
             if (!selectedSpot) {
-                showModal("Selection Required", "Please select a fishing spot before generating a report.");
+                showModal("Selection Required", "Please select a fishing spot.");
                 return;
             }
 
-            // 1. Set UI to Loading State
             clearReports();
             initialMessage.classList.add('hidden');
-            reportOutput.classList.add('hidden');
             loadingState.classList.remove('hidden');
             generateBtn.disabled = true;
-            
-            // NEW: Hide the directions link while loading
             directionsLink.classList.add('hidden');
-
-            // NEW: Set the directions link URL immediately
             directionsLink.href = generateDirectionsLink(selectedSpot);
 
-
-            const systemPrompt = "You are a local Illinois fishing expert providing an advisory report. Analyze information and provide a concise, structured report in plain Markdown format using the following headings: '### Current Weather & Conditions', '### Primary Fish Species', '### Recommended Baits for November', and '### Estimated Water Depth/Characteristics'. Do not use conversational filler or intros. Only output the Markdown content.";
-            
-            // Use current month for context
-            const now = new Date();
-            const currentMonth = now.toLocaleString('en-US', { month: 'long', year: 'numeric' });
-            
-            const userQuery = `Provide a detailed fishing report for the spot: "${selectedSpot}" near Naperville, Illinois. The current month is ${currentMonth}. The report MUST include the following structured sections: 'Current Weather & Conditions', 'Primary Fish Species', 'Recommended Baits for ${currentMonth}', and 'Estimated Water Depth/Characteristics'. Use information grounded in real-time search results.`;
+            const systemPrompt = "You are a local Illinois fishing expert. Provide a concise report using: '### Current Weather & Conditions', '### Primary Fish Species', '### Recommended Baits', and '### Estimated Water Depth'.";
+            const currentMonth = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
+            const userQuery = `Provide a detailed fishing report for: "${selectedSpot}" near Naperville, IL. Month: ${currentMonth}. Use search grounding.`;
 
             try {
-                // 2. Call Gemini API
                 const { text, sources } = await callGeminiAPI(userQuery, systemPrompt);
-
-                // 3. Update UI with Report
                 reportContent.innerHTML = markdownToHtml(text);
-                
-                // 4. Display Sources
-                sourcesList.innerHTML = sources.map((source, index) => `
-                    <li>
-                        <a href="${source.uri}" target="_blank" rel="noopener noreferrer" class="text-emerald-600 hover:text-emerald-800 hover:underline">
-                            ${index + 1}. ${source.title}
-                        </a>
-                    </li>
-                `).join('');
-                
+                sourcesList.innerHTML = sources.map((s, idx) => `<li><a href="${s.uri}" target="_blank" class="text-emerald-600 hover:underline">${idx + 1}. ${s.title}</a></li>`).join('');
                 reportOutput.classList.remove('hidden');
-                // NEW: Show the directions link after the report is successful
                 directionsLink.classList.remove('hidden'); 
-
             } catch (error) {
-                // 5. Handle Errors
-                console.error("Report Generation Failed:", error);
-                
-                // Show the specific error message to the user
-                errorMessageP.textContent = `Report failed. Error: ${error.message}`;
+                errorMessageP.textContent = `Error: ${error.message}`;
                 errorMessageDiv.classList.remove('hidden');
-                reportOutput.classList.add('hidden');
             } finally {
-                // 6. Reset UI State
                 loadingState.classList.add('hidden');
                 generateBtn.disabled = false;
-                initialMessage.classList.add('hidden');
-                lucide.createIcons(); // Re-create icons for dynamic content
+                lucide.createIcons();
             }
         };
 
-        // Initialize on load
-        window.onload = initApp; 
+        // --- NEW GEOLOCATION FEATURE ---
+        const findNearestSpot = () => {
+            if (!navigator.geolocation) {
+                showModal("Not Supported", "Geolocation is not supported by your browser.");
+                return;
+            }
 
+            geoBtn.disabled = true;
+            const originalText = geoBtn.innerHTML;
+            geoBtn.innerHTML = `<i data-lucide="loader-circle" class="loading-icon w-4 h-4 mr-2"></i> Locating...`;
+            lucide.createIcons();
+
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const userLat = position.coords.latitude;
+                const userLon = position.coords.longitude;
+
+                // Since we don't have a database of Lat/Lon for every spot here, 
+                // we'll use Gemini to identify which of our listed spots is closest 
+                // to these specific coordinates.
+                const geoQuery = `I am at Latitude: ${userLat}, Longitude: ${userLon}. Out of this list: [${FISHING_SPOTS.join(', ')}], which one is geographically the closest? Only return the name of the spot from the list.`;
+                
+                try {
+                    const { text } = await callGeminiAPI(geoQuery, "You are a GPS assistant. Return only the name of the closest spot from the provided list.");
+                    const closestSpot = text.trim();
+                    
+                    // Update select box to match
+                    const match = FISHING_SPOTS.find(s => closestSpot.includes(s) || s.includes(closestSpot));
+                    if (match) {
+                        spotSelect.value = match;
+                        showModal("Location Found", `We've matched your location to ${match}.`);
+                    }
+                } catch (e) {
+                    showModal("Error", "Could not determine nearest spot.");
+                } finally {
+                    geoBtn.disabled = false;
+                    geoBtn.innerHTML = originalText;
+                    lucide.createIcons();
+                }
+
+            }, () => {
+                showModal("Permission Denied", "Please enable location services to use this feature.");
+                geoBtn.disabled = false;
+                geoBtn.innerHTML = originalText;
+                lucide.createIcons();
+            });
+        };
+
+        const initApp = async () => { 
+            spotSelect.innerHTML = FISHING_SPOTS.map(spot => `<option value="${spot}">${spot}</option>`).join('');
+            generateBtn.addEventListener('click', generateReport);
+            geoBtn.addEventListener('click', findNearestSpot);
+            lucide.createIcons();
+        };
+
+        window.onload = initApp; 
     </script>
 </body>
 </html>
-
