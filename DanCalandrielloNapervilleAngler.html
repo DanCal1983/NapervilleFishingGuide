@@ -157,7 +157,6 @@
             "Winding Creek Park Pond, Naperville Illinois",
         ];
         
-        // --- FIXED: Updated to a stable model name ---
         const MODEL_NAME = "gemini-1.5-flash";
         const API_BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent`;
 
@@ -242,9 +241,10 @@
             return html;
         };
         
-        // --- FIXED: Valid Google Maps URL structure ---
+        // --- FIXED: Updated to standard Google Maps format with correct interpolation ---
         const generateDirectionsLink = (destination) => {
             const encodedDestination = encodeURIComponent(destination);
+            // This format works reliably for directions
             return `https://www.google.com/maps/dir/?api=1&destination=${encodedDestination}`;
         }
 
@@ -255,9 +255,10 @@
             const maxRetries = 5;
             let delay = 1000;
             
+            // --- FIXED: Changed "google_search" to "googleSearch" (CamelCase) ---
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }],
-                tools: [{ "google_search": {} }],
+                tools: [{ "googleSearch": {} }],
                 systemInstruction: {
                     parts: [{ text: systemInstruction }]
                 },
@@ -272,11 +273,20 @@
                     });
 
                     if (!response.ok) {
-                        if (response.status === 429 && i < maxRetries - 1) {
+                        const status = response.status;
+                        // If it is a client error (400-404), do NOT retry. Throw immediately.
+                        if (status >= 400 && status < 500 && status !== 429) {
+                             const errorBody = await response.json();
+                             throw new Error(`API Error: ${status} - ${errorBody.error?.message || 'Bad Request'}`);
+                        }
+
+                        // If it is a rate limit (429) or server error (500), retry.
+                        if ((status === 429 || status >= 500) && i < maxRetries - 1) {
                             await new Promise(resolve => setTimeout(resolve, delay));
                             delay *= 2;
                             continue;
                         }
+                        
                         const errorBody = await response.json();
                         throw new Error(`API Error: ${response.status} - ${errorBody.error?.message || 'Unknown error'}`);
                     }
@@ -304,9 +314,12 @@
                     }
 
                 } catch (error) {
-                    console.error("Gemini API call failed:", error);
-                    if (i === maxRetries - 1) {
-                        throw new Error("Failed to connect to the fishing intelligence system. Please try again later.");
+                    // Don't log to console for user to find, display it if it's the last retry
+                    console.error("Gemini API attempt failed:", error);
+                    
+                    // If we shouldn't retry (it was thrown intentionally above) or we ran out of retries
+                    if (error.message.includes("API Error: 4") || i === maxRetries - 1) {
+                         throw error; // Pass the real error message to the UI
                     }
                     await new Promise(resolve => setTimeout(resolve, delay));
                     delay *= 2;
@@ -380,7 +393,7 @@
             } catch (error) {
                 console.error("Report Generation Failed:", error);
                 
-                errorMessageP.textContent = `Report failed. Error: ${error.message}`;
+                errorMessageP.textContent = `${error.message}`;
                 errorMessageDiv.classList.remove('hidden');
                 reportOutput.classList.add('hidden');
             } finally {
