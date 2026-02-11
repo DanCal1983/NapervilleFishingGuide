@@ -158,9 +158,8 @@
         ];
         
         // --- MODEL SELECTION ---
-        // Using Gemini 2.0 Flash because 1.5 failed (404) for your key, 
-        // while 2.0 connected but just hit a speed limit (429).
-        const MODEL_NAME = "gemini-2.0-flash";
+        // Using Gemini 1.5 Flash-8B for higher speed and limits
+        const MODEL_NAME = "gemini-1.5-flash-8b";
         const API_BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent`;
 
         // !!! YOUR NEW API KEY !!!
@@ -170,8 +169,8 @@
         const spotSelect = document.getElementById('fishing-spot');
         const generateBtn = document.getElementById('generate-report-btn');
         const loadingState = document.getElementById('loading-state');
-        const loadingText = document.getElementById('loading-text'); // New ID
-        const loadingSubtext = document.getElementById('loading-subtext'); // New ID
+        const loadingText = document.getElementById('loading-text');
+        const loadingSubtext = document.getElementById('loading-subtext');
         const initialMessage = document.getElementById('initial-message');
         const reportOutput = document.getElementById('report-output');
         const reportContent = document.getElementById('report-content');
@@ -227,7 +226,7 @@
             return html;
         };
         
-        // --- Universal Google Maps URL ---
+        // --- FIXED: Standard Google Maps Search URL ---
         const generateDirectionsLink = (destination) => {
             const encodedDestination = encodeURIComponent(destination);
             return `https://www.google.com/maps/search/?api=1&query=${encodedDestination}`;
@@ -303,9 +302,7 @@
                     }
 
                 } catch (error) {
-                    // Only log to console, user sees the message in the finally block or thrown error
                     console.error("Gemini API attempt failed:", error);
-                    // If it's the last try, throw the error to be caught by the main function
                     if (i === maxRetries - 1) throw error;
                 }
             }
