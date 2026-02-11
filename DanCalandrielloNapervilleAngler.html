@@ -157,7 +157,8 @@
             "Winding Creek Park Pond, Naperville Illinois",
         ];
         
-        const MODEL_NAME = "gemini-1.5-flash";
+        // --- FIXED: Use exact version number to avoid 404 errors ---
+        const MODEL_NAME = "gemini-1.5-flash-002";
         const API_BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent`;
 
         // !!! YOUR HARDCODED API KEY IS HERE. THIS IS REQUIRED FOR GITHUB HOSTING. !!!
@@ -241,11 +242,11 @@
             return html;
         };
         
-        // --- FIXED: Updated to standard Google Maps format with correct interpolation ---
+        // --- FIXED: Properly formatted Google Maps Search Link ---
         const generateDirectionsLink = (destination) => {
             const encodedDestination = encodeURIComponent(destination);
-            // This format works reliably for directions
-            return `https://www.google.com/maps/dir/?api=1&destination=${encodedDestination}`;
+            // Uses the official Google Maps search API format
+            return `https://www.google.com/maps/search/?api=1&query=${encodedDestination}`;
         }
 
         /**
@@ -255,7 +256,7 @@
             const maxRetries = 5;
             let delay = 1000;
             
-            // --- FIXED: Changed "google_search" to "googleSearch" (CamelCase) ---
+            // "googleSearch" is the correct camelCase tool name for v1beta JSON
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }],
                 tools: [{ "googleSearch": {} }],
@@ -274,21 +275,21 @@
 
                     if (!response.ok) {
                         const status = response.status;
-                        // If it is a client error (400-404), do NOT retry. Throw immediately.
+                        const errorBody = await response.json();
+                        
+                        // If client error (400-404), throw immediately with detail
                         if (status >= 400 && status < 500 && status !== 429) {
-                             const errorBody = await response.json();
                              throw new Error(`API Error: ${status} - ${errorBody.error?.message || 'Bad Request'}`);
                         }
-
-                        // If it is a rate limit (429) or server error (500), retry.
+                        
+                        // If rate limit (429) or server error (500), retry
                         if ((status === 429 || status >= 500) && i < maxRetries - 1) {
                             await new Promise(resolve => setTimeout(resolve, delay));
                             delay *= 2;
                             continue;
                         }
                         
-                        const errorBody = await response.json();
-                        throw new Error(`API Error: ${response.status} - ${errorBody.error?.message || 'Unknown error'}`);
+                        throw new Error(`API Error: ${status} - ${errorBody.error?.message || 'Unknown error'}`);
                     }
 
                     const result = await response.json();
@@ -314,12 +315,9 @@
                     }
 
                 } catch (error) {
-                    // Don't log to console for user to find, display it if it's the last retry
                     console.error("Gemini API attempt failed:", error);
-                    
-                    // If we shouldn't retry (it was thrown intentionally above) or we ran out of retries
                     if (error.message.includes("API Error: 4") || i === maxRetries - 1) {
-                         throw error; // Pass the real error message to the UI
+                         throw error; 
                     }
                     await new Promise(resolve => setTimeout(resolve, delay));
                     delay *= 2;
@@ -356,11 +354,8 @@
             loadingState.classList.remove('hidden');
             generateBtn.disabled = true;
             
-            // NEW: Hide the directions link while loading
+            // Hide link initially
             directionsLink.classList.add('hidden');
-
-            // NEW: Set the directions link URL immediately
-            directionsLink.href = generateDirectionsLink(selectedSpot);
 
             const systemPrompt = "You are a local Illinois fishing expert providing an advisory report. Analyze information and provide a concise, structured report in plain Markdown format using the following headings: '### Current Weather & Conditions', '### Primary Fish Species', '### Recommended Baits for November', and '### Estimated Water Depth/Characteristics'. Do not use conversational filler or intros. Only output the Markdown content.";
             
@@ -387,7 +382,11 @@
                      sourcesList.innerHTML = '<li>No external sources cited.</li>';
                 }
                 
+                // Show report
                 reportOutput.classList.remove('hidden');
+                
+                // Update and show directions link
+                directionsLink.href = generateDirectionsLink(selectedSpot);
                 directionsLink.classList.remove('hidden'); 
 
             } catch (error) {
