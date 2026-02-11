@@ -88,7 +88,7 @@
             <div id="initial-message" class="text-center p-6 bg-blue-50 border border-blue-200 rounded-lg">
                 <i data-lucide="info" class="w-6 h-6 text-blue-600 mx-auto mb-3"></i>
                 <p class="text-blue-700">Select a location above and click 'Generate Fishing Report' to get started!</p><br>
-                <p class="text-blue-700">Dan Calandriello ©2026</p>
+                <p class="text-blue-700">Dan Calandriello ©2025</p>
             </div>
 
             <div id="report-output" class="hidden report-section p-6 bg-white border border-gray-200 rounded-xl shadow-lg">
@@ -158,8 +158,8 @@
         ];
         
         // --- MODEL SELECTION ---
-        // Using Gemini 1.5 Flash-8B for higher speed and limits
-        const MODEL_NAME = "gemini-1.5-flash-8b";
+        // Returning to Gemini 2.0 Flash because we confirmed it connects (429 is better than 404)
+        const MODEL_NAME = "gemini-2.0-flash";
         const API_BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent`;
 
         // !!! YOUR NEW API KEY !!!
@@ -226,18 +226,19 @@
             return html;
         };
         
-        // --- FIXED: Standard Google Maps Search URL ---
+        // --- FIXED: Reliable Universal Google Maps URL ---
         const generateDirectionsLink = (destination) => {
             const encodedDestination = encodeURIComponent(destination);
-            return `https://www.google.com/maps/search/?api=1&query=${encodedDestination}`;
+            // This format works on all devices and forces a search
+            return `https://www.google.com/maps/search/?api=1&query={encodedDestination}`;
         }
 
         /**
-         * Calls the Gemini API with AUTO-RETRY logic for 429 errors.
+         * Calls the Gemini API with SMART RETRY logic.
          */
         const callGeminiAPI = async (prompt, systemInstruction) => {
             const maxRetries = 5;
-            let delay = 2000; // Start with 2 seconds
+            let delay = 3000; // Start with 3 seconds
             
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }],
@@ -249,8 +250,8 @@
                 try {
                     // Update Loading UI if we are retrying
                     if (i > 0) {
-                        loadingText.textContent = `Server busy (Attempt ${i+1}/${maxRetries})...`;
-                        loadingSubtext.textContent = "Retrying automatically, please wait.";
+                        loadingText.textContent = `Google limit hit. Cooling down...`;
+                        loadingSubtext.textContent = `Attempt ${i+1}/${maxRetries} (Waiting ${delay/1000}s)`;
                     }
 
                     const response = await fetch(`${API_BASE_URL}?key=${apiKey}`, {
@@ -268,10 +269,10 @@
                             console.warn(`Rate limit hit (429). Waiting ${delay}ms...`);
                             if (i < maxRetries - 1) {
                                 await new Promise(resolve => setTimeout(resolve, delay));
-                                delay *= 2; // Double the wait time (Exponential Backoff)
+                                delay *= 1.5; // Increase wait time
                                 continue; // Retry loop
                             } else {
-                                throw new Error("Server is too busy right now. Please try again in 1 minute.");
+                                throw new Error("Google's free server is too busy. Please wait 1 minute and try again.");
                             }
                         }
 
@@ -378,4 +379,3 @@
     </script>
 </body>
 </html>
-
