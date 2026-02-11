@@ -81,8 +81,8 @@
         <div id="report-container" class="mt-8">
             <div id="loading-state" class="hidden text-center p-8 bg-gray-50 rounded-xl shadow-inner">
                 <i data-lucide="loader-circle" class="loading-icon w-8 h-8 text-emerald-600 mx-auto mb-3"></i>
-                <p class="text-gray-600 font-semibold">Generating detailed report... Please wait.</p>
-                <p class="text-xs text-gray-400 mt-1">Fetching current conditions and seasonal advice.</p>
+                <p class="text-gray-600 font-semibold" id="loading-text">Generating detailed report...</p>
+                <p class="text-xs text-gray-400 mt-1" id="loading-subtext">Fetching current conditions and seasonal advice.</p>
             </div>
 
             <div id="initial-message" class="text-center p-6 bg-blue-50 border border-blue-200 rounded-lg">
@@ -157,17 +157,21 @@
             "Winding Creek Park Pond, Naperville Illinois",
         ];
         
-        // --- Switched to Gemini 1.5 Flash (More reliable free tier) ---
-        const MODEL_NAME = "gemini-1.5-flash";
+        // --- MODEL SELECTION ---
+        // Using Gemini 2.0 Flash because 1.5 failed (404) for your key, 
+        // while 2.0 connected but just hit a speed limit (429).
+        const MODEL_NAME = "gemini-2.0-flash";
         const API_BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent`;
 
-        // !!! YOUR NEW API KEY IS HERE !!!
+        // !!! YOUR NEW API KEY !!!
         const apiKey = "AIzaSyDliq-jFo4Kl7QRfezPc8L8ktRJxYadUEU"; 
         
         // --- DOM Elements ---
         const spotSelect = document.getElementById('fishing-spot');
         const generateBtn = document.getElementById('generate-report-btn');
         const loadingState = document.getElementById('loading-state');
+        const loadingText = document.getElementById('loading-text'); // New ID
+        const loadingSubtext = document.getElementById('loading-subtext'); // New ID
         const initialMessage = document.getElementById('initial-message');
         const reportOutput = document.getElementById('report-output');
         const reportContent = document.getElementById('report-content');
@@ -205,39 +209,21 @@
         /** Converts markdown to basic HTML for display */
         const markdownToHtml = (markdown) => {
             let html = markdown;
-            
-            // Convert headers (assuming level 3 for sections)
             html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-            
-            // Convert unordered lists
             html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
             html = html.replace(/^(<li>.*<\/li>)$/gms, '<ul>$1</ul>');
-            
-            // Convert bold text
             html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            
-            // --- START of LaTeX Cleanup ---
             html = html.replace(/\$(.*?)\$/g, '$1');
             html = html.replace(/\\(circ|degree|text|unit)\{?([F C \s]*)?\}?/gi, (match, p1, p2) => {
-                if (p1.toLowerCase() === 'circ' || p1.toLowerCase() === 'degree') {
-                    return '°' + (p2 ? p2.trim() : ''); 
-                }
+                if (p1.toLowerCase() === 'circ' || p1.toLowerCase() === 'degree') { return '°' + (p2 ? p2.trim() : ''); }
                 return p2 ? p2.trim() : ''; 
             });
             html = html.replace(/\\circ/g, '°');
             html = html.replace(/[\^_]\{([^{}]*)\}/g, '$1'); 
-            // --- END of LaTeX Cleanup ---
-            
-            // Convert newlines to paragraphs
             html = html.split('\n\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('');
-            
-            // Remove remaining single newlines that aren't paragraph breaks
             html = html.replace(/\n/g, ''); 
-
-            // Clean up <ul>/<li> nesting issues
             html = html.replace(/<\/p><ul>/g, '<ul>').replace(/<\/ul><p>/g, '</ul>');
             html = html.replace(/<p><ul>/g, '<ul>').replace(/<\/ul><\/p>/g, '</ul>');
-            
             return html;
         };
         
@@ -248,48 +234,54 @@
         }
 
         /**
-         * Calls the Gemini API with exponential backoff and search grounding.
+         * Calls the Gemini API with AUTO-RETRY logic for 429 errors.
          */
         const callGeminiAPI = async (prompt, systemInstruction) => {
             const maxRetries = 5;
-            let delay = 1000;
+            let delay = 2000; // Start with 2 seconds
             
-            // "googleSearch" is the correct camelCase tool name for v1beta JSON
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }],
                 tools: [{ "googleSearch": {} }],
-                systemInstruction: {
-                    parts: [{ text: systemInstruction }]
-                },
+                systemInstruction: { parts: [{ text: systemInstruction }] },
             };
 
             for (let i = 0; i < maxRetries; i++) {
                 try {
+                    // Update Loading UI if we are retrying
+                    if (i > 0) {
+                        loadingText.textContent = `Server busy (Attempt ${i+1}/${maxRetries})...`;
+                        loadingSubtext.textContent = "Retrying automatically, please wait.";
+                    }
+
                     const response = await fetch(`${API_BASE_URL}?key=${apiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
 
+                    // --- HANDLE ERRORS ---
                     if (!response.ok) {
                         const status = response.status;
+                        
+                        // IF RATE LIMITED (429) -> WAIT AND RETRY
+                        if (status === 429 || status === 503) {
+                            console.warn(`Rate limit hit (429). Waiting ${delay}ms...`);
+                            if (i < maxRetries - 1) {
+                                await new Promise(resolve => setTimeout(resolve, delay));
+                                delay *= 2; // Double the wait time (Exponential Backoff)
+                                continue; // Retry loop
+                            } else {
+                                throw new Error("Server is too busy right now. Please try again in 1 minute.");
+                            }
+                        }
+
+                        // IF OTHER ERROR (400, 403, 404) -> FAIL IMMEDIATELY
                         const errorBody = await response.json();
-                        
-                        // If client error (400-404), throw immediately with detail
-                        if (status >= 400 && status < 500 && status !== 429) {
-                             throw new Error(`API Error: ${status} - ${errorBody.error?.message || 'Bad Request'}`);
-                        }
-                        
-                        // If rate limit (429) or server error (500), retry
-                        if ((status === 429 || status >= 500) && i < maxRetries - 1) {
-                            await new Promise(resolve => setTimeout(resolve, delay));
-                            delay *= 2;
-                            continue;
-                        }
-                        
                         throw new Error(`API Error: ${status} - ${errorBody.error?.message || 'Unknown error'}`);
                     }
 
+                    // --- SUCCESS ---
                     const result = await response.json();
                     const candidate = result.candidates?.[0];
 
@@ -297,7 +289,6 @@
                         const text = candidate.content.parts[0].text;
                         let sources = [];
                         const groundingMetadata = candidate.groundingMetadata;
-                        
                         if (groundingMetadata && groundingMetadata.groundingAttributions) {
                             sources = groundingMetadata.groundingAttributions
                                 .map(attribution => ({
@@ -306,19 +297,16 @@
                                     }))
                                 .filter(source => source.uri && source.title);
                         }
-
                         return { text, sources };
                     } else {
-                        throw new Error("Received an empty or malformed response from the model.");
+                        throw new Error("Received an empty response from the AI.");
                     }
 
                 } catch (error) {
+                    // Only log to console, user sees the message in the finally block or thrown error
                     console.error("Gemini API attempt failed:", error);
-                    if (error.message.includes("API Error: 4") || i === maxRetries - 1) {
-                         throw error; 
-                    }
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                    delay *= 2;
+                    // If it's the last try, throw the error to be caught by the main function
+                    if (i === maxRetries - 1) throw error;
                 }
             }
         };
@@ -327,22 +315,15 @@
         // --- Main Application Logic ---
 
         const initApp = async () => { 
-            // Populate select box
-            spotSelect.innerHTML = FISHING_SPOTS.map(spot => 
-                `<option value="${spot}">${spot}</option>`
-            ).join('');
-            
-            // Set up event listener
+            spotSelect.innerHTML = FISHING_SPOTS.map(spot => `<option value="${spot}">${spot}</option>`).join('');
             generateBtn.addEventListener('click', generateReport);
-            
-            // Initialize icons
             lucide.createIcons();
         };
 
         const generateReport = async () => {
             const selectedSpot = spotSelect.value;
             if (!selectedSpot) {
-                showModal("Selection Required", "Please select a fishing spot before generating a report.");
+                showModal("Selection Required", "Please select a fishing spot.");
                 return;
             }
 
@@ -350,9 +331,12 @@
             initialMessage.classList.add('hidden');
             reportOutput.classList.add('hidden');
             loadingState.classList.remove('hidden');
-            generateBtn.disabled = true;
             
-            // Hide link initially
+            // Reset loading text
+            loadingText.textContent = "Generating detailed report...";
+            loadingSubtext.textContent = "Fetching current conditions and seasonal advice.";
+            
+            generateBtn.disabled = true;
             directionsLink.classList.add('hidden');
 
             const systemPrompt = "You are a local Illinois fishing expert providing an advisory report. Analyze information and provide a concise, structured report in plain Markdown format using the following headings: '### Current Weather & Conditions', '### Primary Fish Species', '### Recommended Baits for November', and '### Estimated Water Depth/Characteristics'. Do not use conversational filler or intros. Only output the Markdown content.";
@@ -367,29 +351,20 @@
 
                 reportContent.innerHTML = markdownToHtml(text);
                 
-                // Display Sources
                 if (sources && sources.length > 0) {
                      sourcesList.innerHTML = sources.map((source, index) => `
-                        <li>
-                            <a href="${source.uri}" target="_blank" rel="noopener noreferrer" class="text-emerald-600 hover:text-emerald-800 hover:underline">
-                                ${index + 1}. ${source.title}
-                            </a>
-                        </li>
+                        <li><a href="${source.uri}" target="_blank" class="text-emerald-600 hover:underline">${index + 1}. ${source.title}</a></li>
                     `).join('');
                 } else {
                      sourcesList.innerHTML = '<li>No external sources cited.</li>';
                 }
                 
-                // Show report
                 reportOutput.classList.remove('hidden');
-                
-                // Update and show directions link
                 directionsLink.href = generateDirectionsLink(selectedSpot);
                 directionsLink.classList.remove('hidden'); 
 
             } catch (error) {
                 console.error("Report Generation Failed:", error);
-                
                 errorMessageP.textContent = `${error.message}`;
                 errorMessageDiv.classList.remove('hidden');
                 reportOutput.classList.add('hidden');
