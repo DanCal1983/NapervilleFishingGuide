@@ -157,8 +157,8 @@
             "Winding Creek Park Pond, Naperville Illinois",
         ];
         
-        // --- FIXED: Use exact version number to avoid 404 errors ---
-        const MODEL_NAME = "gemini-1.5-flash-002";
+        // --- FIXED: Switched to Gemini 2.0 Flash ---
+        const MODEL_NAME = "gemini-2.0-flash";
         const API_BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent`;
 
         // !!! YOUR HARDCODED API KEY IS HERE. THIS IS REQUIRED FOR GITHUB HOSTING. !!!
@@ -242,10 +242,9 @@
             return html;
         };
         
-        // --- FIXED: Properly formatted Google Maps Search Link ---
+        // --- FIXED: Universal Google Maps URL ---
         const generateDirectionsLink = (destination) => {
             const encodedDestination = encodeURIComponent(destination);
-            // Uses the official Google Maps search API format
             return `https://www.google.com/maps/search/?api=1&query=${encodedDestination}`;
         }
 
