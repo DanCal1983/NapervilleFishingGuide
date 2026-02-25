@@ -38,7 +38,7 @@
         <div id="report-container">
             <div id="loading-state" class="hidden text-center p-8 bg-gray-50 rounded-xl">
                 <i data-lucide="loader-circle" class="loading-icon w-8 h-8 text-emerald-600 mx-auto mb-3"></i>
-                <p class="text-gray-600 font-semibold">Fetching latest water data...</p>
+                <p class="text-gray-600 font-semibold">Consulting local data...</p>
             </div>
             <div id="initial-message" class="text-center p-6 bg-blue-50 border border-blue-200 rounded-lg">
                 <p class="text-blue-700">Select a spot and click generate!</p>
@@ -66,7 +66,6 @@
             "Whalon Lake (Naperville/Bolingbrook)", "Winding Creek Park Pond, Naperville Illinois"
         ];
 
-        // !!! IMPORTANT: Ensure this key was made at aistudio.google.com !!!
         const apiKey = "AIzaSyBE8seid_wmC75pTfSJGpVmmFsAcBgmDVo";
         const spotSelect = document.getElementById('fishing-spot');
         const generateBtn = document.getElementById('generate-report-btn');
@@ -89,7 +88,7 @@
         };
 
         const callGeminiAPI = async (prompt, systemInstruction) => {
-            // Updated URL format to be as simple as possible
+            // Updated to the most explicit URL format possible
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
             
             const payload = {
@@ -108,7 +107,7 @@
 
             if (!response.ok) {
                 console.error("Gemini API Error:", result);
-                throw new Error(result.error?.message || "Check if your API key is restricted.");
+                throw new Error(result.error?.message || "Check your API restrictions.");
             }
 
             const text = result.candidates[0].content.parts[0].text;
@@ -140,11 +139,11 @@
             } finally {
                 loadingState.classList.add('hidden');
                 generateBtn.disabled = false;
-                lucide.createIcons();
+                if (window.lucide) lucide.createIcons();
             }
         });
 
-        lucide.createIcons();
+        if (window.lucide) lucide.createIcons();
     </script>
 </body>
 </html>
