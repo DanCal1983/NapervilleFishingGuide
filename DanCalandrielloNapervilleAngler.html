@@ -38,7 +38,7 @@
                 <span class="mr-2 text-emerald-600">
                     <i data-lucide="fish" class="w-7 h-7"></i>
                 </span>
-                Dan Calandriello's Naperville Angler Proop
+                Dan Calandriello's Naperville Angler Pro456
             </h1>
             <p class="text-gray-500 mt-2 text-sm">Real-time fishing intelligence for the Naperville, IL area.</p>
         </header>
@@ -115,7 +115,6 @@
     const errorMessageP = document.getElementById('error-text'); 
     const directionsLink = document.getElementById('directions-link');
 
-    // Populate Dropdown
     spotSelect.innerHTML = FISHING_SPOTS.map(s => `<option value="${s}">${s}</option>`).join('');
 
     const markdownToHtml = (markdown) => {
@@ -123,19 +122,20 @@
             .replace(/^### (.*$)/gim, '<h3>$1</h3>')
             .replace(/^\* (.*$)/gim, '<li>$1</li>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
         const paragraphs = html.split('\n\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('');
         return paragraphs.replace(/<p><li>/g, '<li>').replace(/<\/li><\/p>/g, '</li>');
     };
 
     const callGeminiAPI = async (prompt, systemInstruction) => {
-        // FIXED URL: Added 'models/' prefix which is often required by v1beta
+        // We are trying 'gemini-1.5-flash' but calling it specifically
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
         
         const payload = {
             contents: [{ parts: [{ text: prompt }] }],
             tools: [{ "google_search": {} }],
-            system_instruction: { parts: [{ text: systemInstruction }] }
+            // Some v1beta environments prefer 'systemInstruction' (CamelCase) 
+            // even if earlier docs suggested underscores.
+            systemInstruction: { parts: [{ text: systemInstruction }] }
         };
 
         const response = await fetch(url, {
@@ -144,17 +144,12 @@
             body: JSON.stringify(payload)
         });
 
-        if (!response.ok) {
-            const err = await response.json();
-            // Logging the full error to your Edge console so we can see if it's a restriction issue
-            console.error("Gemini API Error Details:", err);
-            throw new Error(err.error?.message || "API connection failed.");
-        }
-
         const result = await response.json();
-        
-        if (!result.candidates || result.candidates.length === 0) {
-            throw new Error("No report generated. Please try again.");
+
+        if (!response.ok) {
+            console.error("Gemini API Error Details:", result);
+            // This will tell us if it's a quota/billing issue
+            throw new Error(result.error?.message || "API connection failed.");
         }
 
         const text = result.candidates[0].content.parts[0].text;
@@ -167,16 +162,14 @@
 
     generateBtn.addEventListener('click', async () => {
         const selectedSpot = spotSelect.value;
-        const currentMonth = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
-        
         loadingState.classList.remove('hidden');
         initialMessage.classList.add('hidden');
         reportOutput.classList.add('hidden');
         errorMessageDiv.classList.add('hidden');
         generateBtn.disabled = true;
 
-        const systemPrompt = "You are a local Illinois fishing expert. Search for real-time conditions. Provide a report with: '### Current Weather & Conditions', '### Primary Fish Species', '### Recommended Baits', and '### Water Characteristics'.";
-        const userQuery = `Current fishing report and water conditions for ${selectedSpot} in Naperville, IL area for today in ${currentMonth}.`;
+        const systemPrompt = "You are a local Illinois fishing expert. Use real-time search to provide a structured fishing report.";
+        const userQuery = `Current fishing conditions for ${selectedSpot} in Naperville, IL.`;
 
         try {
             const { text, sources } = await callGeminiAPI(userQuery, systemPrompt);
@@ -185,16 +178,16 @@
             directionsLink.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selectedSpot)}`;
             reportOutput.classList.remove('hidden');
         } catch (error) {
-            errorMessageP.textContent = `Report Error: ${error.message}`;
+            errorMessageP.textContent = `Error: ${error.message}`;
             errorMessageDiv.classList.remove('hidden');
         } finally {
             loadingState.classList.add('hidden');
             generateBtn.disabled = false;
-            lucide.createIcons();
+            if (window.lucide) lucide.createIcons();
         }
     });
 
-    lucide.createIcons();
+    if (window.lucide) lucide.createIcons();
 </script>
 </body>
 </html>
