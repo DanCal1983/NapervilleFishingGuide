@@ -38,7 +38,7 @@
                 <span class="mr-2 text-emerald-600">
                     <i data-lucide="fish" class="w-7 h-7"></i>
                 </span>
-                Dan Calandriello's Naperville Angler Pro
+                Dan Calandriello's Naperville Angler Pro23
             </h1>
             <p class="text-gray-500 mt-2 text-sm">Real-time fishing intelligence for the Naperville, Il area.</p>
         </header>
@@ -98,8 +98,8 @@
         "Whalon Lake (Naperville/Bolingbrook)", "Winding Creek Park Pond, Naperville Illinois"
     ];
 
-    // Updated naming and base URL for v1beta compatibility
-    const MODEL_NAME = "gemini-1.5-flash";
+    // Using the stable v1 endpoint and the 'latest' model alias
+    const MODEL_NAME = "gemini-1.5-flash-latest";
     const apiKey = "AIzaSyBE8seid_wmC75pTfSJGpVmmFsAcBgmDVo"; 
 
     const spotSelect = document.getElementById('fishing-spot');
@@ -130,8 +130,8 @@
             systemInstruction: { parts: [{ text: systemInstruction }] },
         };
         
-        // Revised URL structure for v1beta/models/model-name:generateContent
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
+        // Switched to 'v1' stable endpoint for better model discovery
+        const url = `https://generativelanguage.googleapis.com/v1/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
         
         const response = await fetch(url, {
             method: 'POST',
@@ -141,12 +141,15 @@
 
         if (!response.ok) {
             const err = await response.json();
-            throw new Error(err.error?.message || "API Error");
+            // If v1 fails, it provides a very detailed error in the console
+            console.error("Detailed API Error:", err);
+            throw new Error(err.error?.message || "API connection failed.");
         }
+        
         const result = await response.json();
         
         if (!result.candidates || result.candidates.length === 0) {
-            throw new Error("No fishing report generated. Try a different spot.");
+            throw new Error("The AI didn't return a report. Please try again.");
         }
 
         const text = result.candidates[0].content.parts[0].text;
@@ -159,8 +162,7 @@
 
     const generateReport = async () => {
         const selectedSpot = spotSelect.value;
-        const now = new Date();
-        const currentMonth = now.toLocaleString('en-US', { month: 'long' });
+        const currentMonth = new Date().toLocaleString('en-US', { month: 'long' });
         
         loadingState.classList.remove('hidden');
         initialMessage.classList.add('hidden');
@@ -168,20 +170,20 @@
         errorMessageDiv.classList.add('hidden');
         generateBtn.disabled = true;
 
-        const systemPrompt = `You are a local Illinois fishing expert. Provide a structured report in Markdown with these headings: '### Current Weather & Conditions', '### Primary Fish Species', '### Recommended Baits for ${currentMonth}', and '### Estimated Water Depth/Characteristics'.`;
-        const userQuery = `Fishing report for ${selectedSpot}, Naperville, IL. Current Month: ${currentMonth}. Use real-time data.`;
+        const systemPrompt = `You are a local Illinois fishing expert. Use the google_search tool to find real-time data. Provide a structured report in Markdown with these headings: '### Current Weather & Conditions', '### Primary Fish Species', '### Recommended Baits for ${currentMonth}', and '### Estimated Water Depth/Characteristics'.`;
+        const userQuery = `Search for the latest fishing conditions at ${selectedSpot} in Naperville, IL for ${currentMonth} 2026. Provide a detailed report.`;
 
         try {
             const { text, sources } = await callGeminiAPI(userQuery, systemPrompt);
             reportContent.innerHTML = markdownToHtml(text);
             sourcesList.innerHTML = sources.map((s, i) => `<li><a href="${s.uri}" target="_blank" class="text-emerald-600 hover:underline">${i+1}. ${s.title}</a></li>`).join('');
             
-            // Fixed the Directions Link
+            // Standard Maps URL
             directionsLink.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selectedSpot)}`;
             
             reportOutput.classList.remove('hidden');
         } catch (error) {
-            errorMessageP.textContent = `Error: ${error.message}`;
+            errorMessageP.textContent = `Report Error: ${error.message}`;
             errorMessageDiv.classList.remove('hidden');
         } finally {
             loadingState.classList.add('hidden');
