@@ -1,19 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-TCW5J75HN1"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-     function gtag(){dataLayer.push(arguments);}
-     gtag('js', new Date());
-     gtag('config', 'G-TCW5J75HN1');
-    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dan Calandriello - Naperville Fishing Guide</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary-color: #059669; }
         body { font-family: 'Inter', sans-serif; background-color: #f0fdf4; }
@@ -25,176 +18,152 @@
             font-size: 1rem; color: #374151; margin-bottom: 0.5rem; line-height: 1.5;
         }
         .report-section ul { list-style: disc; padding-left: 1.5rem; }
-        .report-section strong { font-weight: 600; }
         .loading-icon { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="min-h-screen p-4 sm:p-6 flex flex-col items-center">
+<body class="min-h-screen p-4 flex flex-col items-center">
 
     <div class="w-full max-w-2xl bg-white shadow-xl rounded-xl p-6 md:p-8">
         <header class="mb-6 text-center">
             <h1 class="text-3xl font-extrabold text-gray-900 flex items-center justify-center" style="font-size:22px;">
-                <span class="mr-2 text-emerald-600">
-                    <i data-lucide="fish" class="w-7 h-7"></i>
-                </span>
-                Dan Calandriello's Naperville Angler Pro89
+                <span class="mr-2 text-emerald-600"><i data-lucide="fish" class="w-7 h-7"></i></span>
+                Dan Calandriello's Naperville Angler Pro898
             </h1>
-            <p class="text-gray-500 mt-2 text-sm">Real-time fishing intelligence for the Naperville, Il area.</p>
+            <p class="text-gray-500 mt-2 text-sm">Real-time fishing intelligence for Naperville, IL.</p>
         </header>
 
         <div class="space-y-4 mb-8 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
             <label for="fishing-spot" class="block text-sm font-medium text-gray-700">Select a Fishing Spot:</label>
-            <select id="fishing-spot" class="mt-1 block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:ring-emerald-500 focus:border-emerald-500 rounded-md shadow-sm"></select>
+            <select id="fishing-spot" class="mt-1 block w-full pl-3 pr-10 py-3 text-base border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500"></select>
             <button id="generate-report-btn" class="w-full flex items-center justify-center px-4 py-3 text-base font-medium rounded-lg shadow-lg text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 transition">
                 <i data-lucide="search" class="w-5 h-5 mr-2"></i> Generate Fishing Report
             </button>
         </div>
 
-        <div id="report-container" class="mt-8">
+        <div id="report-container">
             <div id="loading-state" class="hidden text-center p-8 bg-gray-50 rounded-xl">
                 <i data-lucide="loader-circle" class="loading-icon w-8 h-8 text-emerald-600 mx-auto mb-3"></i>
-                <p class="text-gray-600 font-semibold">Generating detailed report...</p>
+                <p class="text-gray-600 font-semibold">Scanning water conditions...</p>
             </div>
 
             <div id="initial-message" class="text-center p-6 bg-blue-50 border border-blue-200 rounded-lg">
-                <i data-lucide="info" class="w-6 h-6 text-blue-600 mx-auto mb-3"></i>
                 <p class="text-blue-700">Select a location and click 'Generate Fishing Report'!</p>
-                <p class="text-xs text-blue-500 mt-4">Dan Calandriello ©2026</p>
             </div>
 
             <div id="report-output" class="hidden report-section p-6 bg-white border border-gray-200 rounded-xl shadow-lg">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Fishing Report</h2>
-                <div id="report-content" class="min-h-[100px] text-gray-700 space-y-3"></div>
-                
+                <div id="report-content" class="min-h-[100px] text-gray-700"></div>
                 <div class="mt-6 pt-4 border-t">
-                    <a id="directions-link" href="#" target="_blank" rel="noopener noreferrer" class="w-full flex items-center justify-center px-4 py-3 rounded-lg shadow-lg text-white bg-blue-600 hover:bg-blue-700">
+                    <a id="directions-link" href="#" target="_blank" class="w-full flex items-center justify-center px-4 py-3 rounded-lg text-white bg-blue-600 hover:bg-blue-700">
                         <i data-lucide="map" class="w-5 h-5 mr-2"></i> Get Directions
                     </a>
                 </div>
                 <div id="sources-container" class="mt-6 pt-4 border-t text-xs text-gray-500">
-                    <p class="mb-2">Dan Calandriello ©2026</p>
                     <ul id="sources-list" class="space-y-1"></ul>
                 </div>
             </div>
 
             <div id="error-message" class="hidden text-center p-6 bg-red-100 border border-red-300 rounded-lg mt-4">
-                <i data-lucide="alert-triangle" class="w-6 h-6 text-red-600 mx-auto mb-3"></i>
                 <p id="error-text" class="text-red-700 font-medium"></p>
             </div>
         </div>
     </div>
 
     <script type="module">
-    const FISHING_SPOTS = [
-        "Arrowhead Pond Park, (Bolingbrook, Illinois)", "Blackhawk Pond Park, (Bolingbrook, Illinois)",
-        "Dupage River Park, (Bolingbrook, Illinois)", "Dupage Riverwalk Piers (Naperville) Quarry Lake",
-        "Goose Lake Park 95th Street Naperville Il", "Herrick Lake in Warrenville, IL",
-        "Hidden Lake Forest Preserve (Eagle/Round Meadow Lake)", "Hidden Lakes Trout Farm (Bolingbrook, Illinois)",
-        "Hobson West Ponds Naperville Illinois", "Lake Osbourne Naperville Illinois",
-        "Lake Renwick Preserve in Plainfield, Illinois", "Pathways Pond (Bolingbrook, Illinois)",
-        "Pioneer Park Dupage River (Naperville, Illinois)", "Silver Lake, Sand Pond (Blackwell Forest Preserve, Warrenville, Il)",
-        "Tall Grass Lakes Ponds", "West Branch DuPage River (McDowell Grove area)",
-        "Whalon Lake (Naperville/Bolingbrook)", "Winding Creek Park Pond, Naperville Illinois"
-    ];
+        const FISHING_SPOTS = [
+            "Arrowhead Pond Park, (Bolingbrook, Illinois)", "Blackhawk Pond Park, (Bolingbrook, Illinois)",
+            "Dupage River Park, (Bolingbrook, Illinois)", "Dupage Riverwalk Piers (Naperville) Quarry Lake",
+            "Goose Lake Park 95th Street Naperville Il", "Herrick Lake in Warrenville, IL",
+            "Hidden Lake Forest Preserve (Eagle/Round Meadow Lake)", "Hidden Lakes Trout Farm (Bolingbrook, Illinois)",
+            "Hobson West Ponds Naperville Illinois", "Lake Osbourne Naperville Illinois",
+            "Lake Renwick Preserve in Plainfield, Illinois", "Pathways Pond (Bolingbrook, Illinois)",
+            "Pioneer Park Dupage River (Naperville, Illinois)", "Silver Lake, Sand Pond (Blackwell Forest Preserve, Warrenville, Il)",
+            "Tall Grass Lakes Ponds", "West Branch DuPage River (McDowell Grove area)",
+            "Whalon Lake (Naperville/Bolingbrook)", "Winding Creek Park Pond, Naperville Illinois"
+        ];
 
-    // Using the stable v1 endpoint and the 'latest' model alias
-    const url = `https://generativelanguage.googleapis.com/v1/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
-    const apiKey = "AIzaSyBE8seid_wmC75pTfSJGpVmmFsAcBgmDVo"; 
+        const apiKey = "AIzaSyBE8seid_wmC75pTfSJGpVmmFsAcBgmDVo"; 
+        const spotSelect = document.getElementById('fishing-spot');
+        const generateBtn = document.getElementById('generate-report-btn');
+        const loadingState = document.getElementById('loading-state');
+        const initialMessage = document.getElementById('initial-message');
+        const reportOutput = document.getElementById('report-output');
+        const reportContent = document.getElementById('report-content');
+        const sourcesList = document.getElementById('sources-list');
+        const errorMessageDiv = document.getElementById('error-message');
+        const errorMessageP = document.getElementById('error-text'); 
+        const directionsLink = document.getElementById('directions-link');
 
-    const spotSelect = document.getElementById('fishing-spot');
-    const generateBtn = document.getElementById('generate-report-btn');
-    const loadingState = document.getElementById('loading-state');
-    const initialMessage = document.getElementById('initial-message');
-    const reportOutput = document.getElementById('report-output');
-    const reportContent = document.getElementById('report-content');
-    const sourcesList = document.getElementById('sources-list');
-    const errorMessageDiv = document.getElementById('error-message');
-    const errorMessageP = document.getElementById('error-text'); 
-    const directionsLink = document.getElementById('directions-link');
+        // Populate Dropdown
+        spotSelect.innerHTML = FISHING_SPOTS.map(s => `<option value="${s}">${s}</option>`).join('');
 
-    const markdownToHtml = (markdown) => {
-        let html = markdown;
-        html = html.replace(/^[| \-:]+$/gm, '').replace(/[|]/g, ' ');
-        html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-        html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
-        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        html = html.split('\n\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('');
-        return html;
-    };
-
-    const callGeminiAPI = async (prompt, systemInstruction) => {
-        const payload = {
-            contents: [{ parts: [{ text: prompt }] }],
-            tools: [{ "google_search": {} }],
-            systemInstruction: { parts: [{ text: systemInstruction }] },
+        const markdownToHtml = (markdown) => {
+            return markdown
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                .replace(/^\* (.*$)/gim, '<li>$1</li>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .split('\n\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('');
         };
-        
-        // Switched to 'v1' stable endpoint for better model discovery
-        const url = `https://generativelanguage.googleapis.com/v1/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
-        
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+
+        const callGeminiAPI = async (prompt, systemInstruction) => {
+            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                tools: [{ "google_search": {} }],
+                systemInstruction: { parts: [{ text: systemInstruction }] }
+            };
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error?.message || "Check Google Cloud Console to enable Generative Language API.");
+            }
+
+            const result = await response.json();
+            const text = result.candidates[0].content.parts[0].text;
+            const sources = result.candidates[0].groundingMetadata?.groundingAttributions?.map(a => ({
+                uri: a.web?.uri, title: a.web?.title
+            })).filter(s => s.uri) || [];
+            
+            return { text, sources };
+        };
+
+        generateBtn.addEventListener('click', async () => {
+            const selectedSpot = spotSelect.value;
+            const currentMonth = new Date().toLocaleString('en-US', { month: 'long' });
+            
+            loadingState.classList.remove('hidden');
+            initialMessage.classList.add('hidden');
+            reportOutput.classList.add('hidden');
+            errorMessageDiv.classList.add('hidden');
+            generateBtn.disabled = true;
+
+            const systemPrompt = `You are a local Illinois fishing expert. Provide a structured report in Markdown with these headings: '### Current Weather & Conditions', '### Primary Fish Species', '### Recommended Baits for ${currentMonth}', and '### Estimated Water Depth/Characteristics'.`;
+            const userQuery = `Search for current fishing conditions at ${selectedSpot}, Naperville, IL.`;
+
+            try {
+                const { text, sources } = await callGeminiAPI(userQuery, systemPrompt);
+                reportContent.innerHTML = markdownToHtml(text);
+                sourcesList.innerHTML = sources.map((s, i) => `<li><a href="${s.uri}" target="_blank" class="text-emerald-600">${i+1}. ${s.title}</a></li>`).join('');
+                directionsLink.href = `https://www.google.com/maps/search/${encodeURIComponent(selectedSpot)}`;
+                reportOutput.classList.remove('hidden');
+            } catch (error) {
+                errorMessageP.textContent = error.message;
+                errorMessageDiv.classList.remove('hidden');
+            } finally {
+                loadingState.classList.add('hidden');
+                generateBtn.disabled = false;
+                lucide.createIcons();
+            }
         });
 
-        if (!response.ok) {
-            const err = await response.json();
-            // If v1 fails, it provides a very detailed error in the console
-            console.error("Detailed API Error:", err);
-            throw new Error(err.error?.message || "API connection failed.");
-        }
-        
-        const result = await response.json();
-        
-        if (!result.candidates || result.candidates.length === 0) {
-            throw new Error("The AI didn't return a report. Please try again.");
-        }
-
-        const text = result.candidates[0].content.parts[0].text;
-        const sources = result.candidates[0].groundingMetadata?.groundingAttributions?.map(a => ({
-            uri: a.web?.uri, title: a.web?.title
-        })).filter(s => s.uri) || [];
-        
-        return { text, sources };
-    };
-
-    const generateReport = async () => {
-        const selectedSpot = spotSelect.value;
-        const currentMonth = new Date().toLocaleString('en-US', { month: 'long' });
-        
-        loadingState.classList.remove('hidden');
-        initialMessage.classList.add('hidden');
-        reportOutput.classList.add('hidden');
-        errorMessageDiv.classList.add('hidden');
-        generateBtn.disabled = true;
-
-        const systemPrompt = `You are a local Illinois fishing expert. Use the google_search tool to find real-time data. Provide a structured report in Markdown with these headings: '### Current Weather & Conditions', '### Primary Fish Species', '### Recommended Baits for ${currentMonth}', and '### Estimated Water Depth/Characteristics'.`;
-        const userQuery = `Search for the latest fishing conditions at ${selectedSpot} in Naperville, IL for ${currentMonth} 2026. Provide a detailed report.`;
-
-        try {
-            const { text, sources } = await callGeminiAPI(userQuery, systemPrompt);
-            reportContent.innerHTML = markdownToHtml(text);
-            sourcesList.innerHTML = sources.map((s, i) => `<li><a href="${s.uri}" target="_blank" class="text-emerald-600 hover:underline">${i+1}. ${s.title}</a></li>`).join('');
-            
-            // Standard Maps URL
-            directionsLink.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selectedSpot)}`;
-            
-            reportOutput.classList.remove('hidden');
-        } catch (error) {
-            errorMessageP.textContent = `Report Error: ${error.message}`;
-            errorMessageDiv.classList.remove('hidden');
-        } finally {
-            loadingState.classList.add('hidden');
-            generateBtn.disabled = false;
-            lucide.createIcons();
-        }
-    };
-
-    spotSelect.innerHTML = FISHING_SPOTS.map(s => `<option value="${s}">${s}</option>`).join('');
-    generateBtn.addEventListener('click', generateReport);
-    lucide.createIcons();
-</script>
+        lucide.createIcons();
+    </script>
 </body>
 </html>
