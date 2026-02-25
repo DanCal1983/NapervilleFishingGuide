@@ -38,7 +38,7 @@
                 <span class="mr-2 text-emerald-600">
                     <i data-lucide="fish" class="w-7 h-7"></i>
                 </span>
-                Dan Calandriello's Naperville Angler Pro23
+                Dan Calandriello's Naperville Angler Pro89
             </h1>
             <p class="text-gray-500 mt-2 text-sm">Real-time fishing intelligence for the Naperville, Il area.</p>
         </header>
@@ -99,7 +99,7 @@
     ];
 
     // Using the stable v1 endpoint and the 'latest' model alias
-    const MODEL_NAME = "gemini-1.5-flash-latest";
+    const url = `https://generativelanguage.googleapis.com/v1/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
     const apiKey = "AIzaSyBE8seid_wmC75pTfSJGpVmmFsAcBgmDVo"; 
 
     const spotSelect = document.getElementById('fishing-spot');
