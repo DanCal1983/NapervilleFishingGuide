@@ -1,70 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-TCW5J75HN1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-TCW5J75HN1');
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dan Calandriello - Naperville Fishing Guide</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         :root { --primary-color: #059669; }
         body { font-family: 'Inter', sans-serif; background-color: #f0fdf4; }
         .report-section h3 {
             font-size: 1.25rem; font-weight: 700; color: var(--primary-color);
-            margin-top: 1rem; border-bottom: 2px solid #a7f3d0; padding-bottom: 0.25rem;
+            margin-top: 1.5rem; border-bottom: 2px solid #a7f3d0; padding-bottom: 0.25rem;
         }
         .report-section p, .report-section ul, .report-section li {
-            font-size: 1rem; color: #374151; margin-bottom: 0.5rem; line-height: 1.5;
+            font-size: 1rem; color: #374151; margin-bottom: 0.5rem; line-height: 1.6;
         }
         .report-section ul { list-style: disc; padding-left: 1.5rem; }
+        .report-section strong { font-weight: 700; }
         .loading-icon { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="min-h-screen p-4 flex flex-col items-center">
+<body class="min-h-screen p-4 sm:p-6 flex flex-col items-center">
 
-    <div class="w-full max-w-2xl bg-white shadow-xl rounded-xl p-6 md:p-8">
+    <div class="w-full max-w-2xl bg-white shadow-xl rounded-xl p-6 md:p-8 mt-4">
         <header class="mb-6 text-center">
             <h1 class="text-3xl font-extrabold text-gray-900 flex items-center justify-center" style="font-size:22px;">
-                <span class="mr-2 text-emerald-600"><i data-lucide="fish" class="w-7 h-7"></i></span>
-                Dan Calandriello's Naperville Angler Pro898
+                <span class="mr-2 text-emerald-600">
+                    <i data-lucide="fish" class="w-7 h-7"></i>
+                </span>
+                Dan Calandriello's Naperville Angler Pro
             </h1>
-            <p class="text-gray-500 mt-2 text-sm">Real-time fishing intelligence for Naperville, IL.</p>
+            <p class="text-gray-500 mt-2 text-sm">Real-time fishing intelligence for the Naperville, IL area.</p>
         </header>
 
         <div class="space-y-4 mb-8 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
             <label for="fishing-spot" class="block text-sm font-medium text-gray-700">Select a Fishing Spot:</label>
-            <select id="fishing-spot" class="mt-1 block w-full pl-3 pr-10 py-3 text-base border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500"></select>
-            <button id="generate-report-btn" class="w-full flex items-center justify-center px-4 py-3 text-base font-medium rounded-lg shadow-lg text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 transition">
-                <i data-lucide="search" class="w-5 h-5 mr-2"></i> Generate Fishing Report
+            <select id="fishing-spot" class="mt-1 block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md shadow-sm transition duration-150 ease-in-out">
+                </select>
+            <button id="generate-report-btn"
+                class="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-lg shadow-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none transition duration-150 disabled:opacity-60 disabled:cursor-not-allowed">
+                <i data-lucide="search" class="w-5 h-5 mr-2"></i>
+                Generate Fishing Report
             </button>
         </div>
 
         <div id="report-container">
-            <div id="loading-state" class="hidden text-center p-8 bg-gray-50 rounded-xl">
+            <div id="loading-state" class="hidden text-center p-8 bg-gray-50 rounded-xl shadow-inner">
                 <i data-lucide="loader-circle" class="loading-icon w-8 h-8 text-emerald-600 mx-auto mb-3"></i>
-                <p class="text-gray-600 font-semibold">Scanning water conditions...</p>
+                <p class="text-gray-600 font-semibold">Generating report using real-time search...</p>
             </div>
 
             <div id="initial-message" class="text-center p-6 bg-blue-50 border border-blue-200 rounded-lg">
-                <p class="text-blue-700">Select a location and click 'Generate Fishing Report'!</p>
+                <i data-lucide="info" class="w-6 h-6 text-blue-600 mx-auto mb-3"></i>
+                <p class="text-blue-700">Select a location above and click 'Generate Fishing Report' to get started!</p>
+                <p class="text-xs text-blue-500 mt-4">Dan Calandriello ©2026</p>
             </div>
 
             <div id="report-output" class="hidden report-section p-6 bg-white border border-gray-200 rounded-xl shadow-lg">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Fishing Report</h2>
                 <div id="report-content" class="min-h-[100px] text-gray-700"></div>
-                <div class="mt-6 pt-4 border-t">
-                    <a id="directions-link" href="#" target="_blank" class="w-full flex items-center justify-center px-4 py-3 rounded-lg text-white bg-blue-600 hover:bg-blue-700">
-                        <i data-lucide="map" class="w-5 h-5 mr-2"></i> Get Directions
+                
+                <div class="mt-6 pt-4 border-t border-gray-100">
+                    <a id="directions-link" href="#" target="_blank" rel="noopener noreferrer" 
+                       class="w-full flex items-center justify-center px-4 py-3 text-base font-medium rounded-lg shadow-lg text-white bg-blue-600 hover:bg-blue-700 transition">
+                        <i data-lucide="map" class="w-5 h-5 mr-2"></i>
+                        Get Google Maps Directions
                     </a>
                 </div>
-                <div id="sources-container" class="mt-6 pt-4 border-t text-xs text-gray-500">
-                    <ul id="sources-list" class="space-y-1"></ul>
+                <div id="sources-container" class="mt-6 pt-4 border-t border-gray-100">
+                    <p class="text-xs font-semibold text-gray-500 mb-2">Sources & References:</p>
+                    <ul id="sources-list" class="text-xs text-gray-500 space-y-1"></ul>
                 </div>
             </div>
 
             <div id="error-message" class="hidden text-center p-6 bg-red-100 border border-red-300 rounded-lg mt-4">
+                <i data-lucide="alert-triangle" class="w-6 h-6 text-red-600 mx-auto mb-3"></i>
                 <p id="error-text" class="text-red-700 font-medium"></p>
             </div>
         </div>
@@ -83,7 +103,7 @@
             "Whalon Lake (Naperville/Bolingbrook)", "Winding Creek Park Pond, Naperville Illinois"
         ];
 
-        const apiKey = "AIzaSyBE8seid_wmC75pTfSJGpVmmFsAcBgmDVo"; 
+        const apiKey = "AIzaSyBE8seid_wmC75pTfSJGpVmmFsAcBgmDVo";
         const spotSelect = document.getElementById('fishing-spot');
         const generateBtn = document.getElementById('generate-report-btn');
         const loadingState = document.getElementById('loading-state');
@@ -95,23 +115,27 @@
         const errorMessageP = document.getElementById('error-text'); 
         const directionsLink = document.getElementById('directions-link');
 
-        // Populate Dropdown
+        // Populate Dropdown immediately
         spotSelect.innerHTML = FISHING_SPOTS.map(s => `<option value="${s}">${s}</option>`).join('');
 
         const markdownToHtml = (markdown) => {
-            return markdown
+            let html = markdown
                 .replace(/^### (.*$)/gim, '<h3>$1</h3>')
                 .replace(/^\* (.*$)/gim, '<li>$1</li>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .split('\n\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('');
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            const paragraphs = html.split('\n\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('');
+            return paragraphs.replace(/<p><li>/g, '<li>').replace(/<\/li><\/p>/g, '</li>');
         };
 
         const callGeminiAPI = async (prompt, systemInstruction) => {
-            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            // v1beta is required for the "tools" and "system_instruction" fields
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }],
                 tools: [{ "google_search": {} }],
-                systemInstruction: { parts: [{ text: systemInstruction }] }
+                system_instruction: { parts: [{ text: systemInstruction }] }
             };
 
             const response = await fetch(url, {
@@ -122,10 +146,15 @@
 
             if (!response.ok) {
                 const err = await response.json();
-                throw new Error(err.error?.message || "Check Google Cloud Console to enable Generative Language API.");
+                throw new Error(err.error?.message || "API connection failed.");
             }
 
             const result = await response.json();
+            
+            if (!result.candidates || result.candidates.length === 0) {
+                throw new Error("No report generated. Please try again.");
+            }
+
             const text = result.candidates[0].content.parts[0].text;
             const sources = result.candidates[0].groundingMetadata?.groundingAttributions?.map(a => ({
                 uri: a.web?.uri, title: a.web?.title
@@ -136,7 +165,7 @@
 
         generateBtn.addEventListener('click', async () => {
             const selectedSpot = spotSelect.value;
-            const currentMonth = new Date().toLocaleString('en-US', { month: 'long' });
+            const currentMonth = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
             
             loadingState.classList.remove('hidden');
             initialMessage.classList.add('hidden');
@@ -144,17 +173,17 @@
             errorMessageDiv.classList.add('hidden');
             generateBtn.disabled = true;
 
-            const systemPrompt = `You are a local Illinois fishing expert. Provide a structured report in Markdown with these headings: '### Current Weather & Conditions', '### Primary Fish Species', '### Recommended Baits for ${currentMonth}', and '### Estimated Water Depth/Characteristics'.`;
-            const userQuery = `Search for current fishing conditions at ${selectedSpot}, Naperville, IL.`;
+            const systemPrompt = "You are a local Illinois fishing expert. Search for real-time conditions. Provide a report with: '### Current Weather & Conditions', '### Primary Fish Species', '### Recommended Baits', and '### Water Characteristics'.";
+            const userQuery = `Current fishing report and water conditions for ${selectedSpot} in Naperville, IL area for ${currentMonth}.`;
 
             try {
                 const { text, sources } = await callGeminiAPI(userQuery, systemPrompt);
                 reportContent.innerHTML = markdownToHtml(text);
-                sourcesList.innerHTML = sources.map((s, i) => `<li><a href="${s.uri}" target="_blank" class="text-emerald-600">${i+1}. ${s.title}</a></li>`).join('');
-                directionsLink.href = `https://www.google.com/maps/search/${encodeURIComponent(selectedSpot)}`;
+                sourcesList.innerHTML = sources.map((s, i) => `<li><a href="${s.uri}" target="_blank" class="text-emerald-600 hover:underline">${i+1}. ${s.title}</a></li>`).join('');
+                directionsLink.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selectedSpot)}`;
                 reportOutput.classList.remove('hidden');
             } catch (error) {
-                errorMessageP.textContent = error.message;
+                errorMessageP.textContent = `Report Error: ${error.message}`;
                 errorMessageDiv.classList.remove('hidden');
             } finally {
                 loadingState.classList.add('hidden');
