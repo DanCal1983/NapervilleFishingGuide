@@ -38,7 +38,7 @@
                 <span class="mr-2 text-emerald-600">
                     <i data-lucide="fish" class="w-7 h-7"></i>
                 </span>
-                Dan Calandriello's Naperville Angler Pro0
+                Dan Calandriello's Naperville Angler Pro
             </h1>
             <p class="text-gray-500 mt-2 text-sm">Real-time fishing intelligence for the Naperville, Il area.</p>
         </header>
@@ -86,100 +86,113 @@
     </div>
 
     <script type="module">
-        const FISHING_SPOTS = [
-            "Arrowhead Pond Park, (Bolingbrook, Illinois)", "Blackhawk Pond Park, (Bolingbrook, Illinois)",
-            "Dupage River Park, (Bolingbrook, Illinois)", "Dupage Riverwalk Piers (Naperville) Quarry Lake",
-            "Goose Lake Park 95th Street Naperville Il", "Herrick Lake in Warrenville, IL",
-            "Hidden Lake Forest Preserve (Eagle/Round Meadow Lake)", "Hidden Lakes Trout Farm (Bolingbrook, Illinois)",
-            "Hobson West Ponds Naperville Illinois", "Lake Osbourne Naperville Illinois",
-            "Lake Renwick Preserve in Plainfield, Illinois", "Pathways Pond (Bolingbrook, Illinois)",
-            "Pioneer Park Dupage River (Naperville, Illinois)", "Silver Lake, Sand Pond (Blackwell Forest Preserve, Warrenville, Il)",
-            "Tall Grass Lakes Ponds", "West Branch DuPage River (McDowell Grove area)",
-            "Whalon Lake (Naperville/Bolingbrook)", "Winding Creek Park Pond, Naperville Illinois"
-        ];
+    const FISHING_SPOTS = [
+        "Arrowhead Pond Park, (Bolingbrook, Illinois)", "Blackhawk Pond Park, (Bolingbrook, Illinois)",
+        "Dupage River Park, (Bolingbrook, Illinois)", "Dupage Riverwalk Piers (Naperville) Quarry Lake",
+        "Goose Lake Park 95th Street Naperville Il", "Herrick Lake in Warrenville, IL",
+        "Hidden Lake Forest Preserve (Eagle/Round Meadow Lake)", "Hidden Lakes Trout Farm (Bolingbrook, Illinois)",
+        "Hobson West Ponds Naperville Illinois", "Lake Osbourne Naperville Illinois",
+        "Lake Renwick Preserve in Plainfield, Illinois", "Pathways Pond (Bolingbrook, Illinois)",
+        "Pioneer Park Dupage River (Naperville, Illinois)", "Silver Lake, Sand Pond (Blackwell Forest Preserve, Warrenville, Il)",
+        "Tall Grass Lakes Ponds", "West Branch DuPage River (McDowell Grove area)",
+        "Whalon Lake (Naperville/Bolingbrook)", "Winding Creek Park Pond, Naperville Illinois"
+    ];
 
-        const MODEL_NAME = "gemini-1.5-flash";
-        const API_BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent`;
-        const apiKey = "AIzaSyBE8seid_wmC75pTfSJGpVmmFsAcBgmDVo"; 
+    // Updated naming and base URL for v1beta compatibility
+    const MODEL_NAME = "gemini-1.5-flash";
+    const apiKey = "AIzaSyBE8seid_wmC75pTfSJGpVmmFsAcBgmDVo"; 
 
-        const spotSelect = document.getElementById('fishing-spot');
-        const generateBtn = document.getElementById('generate-report-btn');
-        const loadingState = document.getElementById('loading-state');
-        const initialMessage = document.getElementById('initial-message');
-        const reportOutput = document.getElementById('report-output');
-        const reportContent = document.getElementById('report-content');
-        const sourcesList = document.getElementById('sources-list');
-        const errorMessageDiv = document.getElementById('error-message');
-        const errorMessageP = document.getElementById('error-text'); 
-        const directionsLink = document.getElementById('directions-link');
+    const spotSelect = document.getElementById('fishing-spot');
+    const generateBtn = document.getElementById('generate-report-btn');
+    const loadingState = document.getElementById('loading-state');
+    const initialMessage = document.getElementById('initial-message');
+    const reportOutput = document.getElementById('report-output');
+    const reportContent = document.getElementById('report-content');
+    const sourcesList = document.getElementById('sources-list');
+    const errorMessageDiv = document.getElementById('error-message');
+    const errorMessageP = document.getElementById('error-text'); 
+    const directionsLink = document.getElementById('directions-link');
 
-        const markdownToHtml = (markdown) => {
-            let html = markdown;
-            html = html.replace(/^[| \-:]+$/gm, '').replace(/[|]/g, ' ');
-            html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-            html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
-            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            html = html.split('\n\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('');
-            return html;
+    const markdownToHtml = (markdown) => {
+        let html = markdown;
+        html = html.replace(/^[| \-:]+$/gm, '').replace(/[|]/g, ' ');
+        html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        html = html.split('\n\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('');
+        return html;
+    };
+
+    const callGeminiAPI = async (prompt, systemInstruction) => {
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+            tools: [{ "google_search": {} }],
+            systemInstruction: { parts: [{ text: systemInstruction }] },
         };
+        
+        // Revised URL structure for v1beta/models/model-name:generateContent
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
 
-        const callGeminiAPI = async (prompt, systemInstruction) => {
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                tools: [{ "google_search": {} }],
-                systemInstruction: { parts: [{ text: systemInstruction }] },
-            };
-            const response = await fetch(`${API_BASE_URL}?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error?.message || "API Error");
-            }
-            const result = await response.json();
-            const text = result.candidates[0].content.parts[0].text;
-            const sources = result.candidates[0].groundingMetadata?.groundingAttributions?.map(a => ({
-                uri: a.web?.uri, title: a.web?.title
-            })).filter(s => s.uri) || [];
-            return { text, sources };
-        };
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error?.message || "API Error");
+        }
+        const result = await response.json();
+        
+        if (!result.candidates || result.candidates.length === 0) {
+            throw new Error("No fishing report generated. Try a different spot.");
+        }
 
-        const generateReport = async () => {
-            const selectedSpot = spotSelect.value;
-            const now = new Date();
-            const currentMonth = now.toLocaleString('en-US', { month: 'long' });
+        const text = result.candidates[0].content.parts[0].text;
+        const sources = result.candidates[0].groundingMetadata?.groundingAttributions?.map(a => ({
+            uri: a.web?.uri, title: a.web?.title
+        })).filter(s => s.uri) || [];
+        
+        return { text, sources };
+    };
+
+    const generateReport = async () => {
+        const selectedSpot = spotSelect.value;
+        const now = new Date();
+        const currentMonth = now.toLocaleString('en-US', { month: 'long' });
+        
+        loadingState.classList.remove('hidden');
+        initialMessage.classList.add('hidden');
+        reportOutput.classList.add('hidden');
+        errorMessageDiv.classList.add('hidden');
+        generateBtn.disabled = true;
+
+        const systemPrompt = `You are a local Illinois fishing expert. Provide a structured report in Markdown with these headings: '### Current Weather & Conditions', '### Primary Fish Species', '### Recommended Baits for ${currentMonth}', and '### Estimated Water Depth/Characteristics'.`;
+        const userQuery = `Fishing report for ${selectedSpot}, Naperville, IL. Current Month: ${currentMonth}. Use real-time data.`;
+
+        try {
+            const { text, sources } = await callGeminiAPI(userQuery, systemPrompt);
+            reportContent.innerHTML = markdownToHtml(text);
+            sourcesList.innerHTML = sources.map((s, i) => `<li><a href="${s.uri}" target="_blank" class="text-emerald-600 hover:underline">${i+1}. ${s.title}</a></li>`).join('');
             
-            loadingState.classList.remove('hidden');
-            initialMessage.classList.add('hidden');
-            reportOutput.classList.add('hidden');
-            errorMessageDiv.classList.add('hidden');
-            generateBtn.disabled = true;
+            // Fixed the Directions Link
+            directionsLink.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selectedSpot)}`;
+            
+            reportOutput.classList.remove('hidden');
+        } catch (error) {
+            errorMessageP.textContent = `Error: ${error.message}`;
+            errorMessageDiv.classList.remove('hidden');
+        } finally {
+            loadingState.classList.add('hidden');
+            generateBtn.disabled = false;
+            lucide.createIcons();
+        }
+    };
 
-            const systemPrompt = `You are a local Illinois fishing expert. Provide a structured report in Markdown with these headings: '### Current Weather & Conditions', '### Primary Fish Species', '### Recommended Baits for ${currentMonth}', and '### Estimated Water Depth/Characteristics'.`;
-            const userQuery = `Fishing report for ${selectedSpot}, Naperville, IL. Month: ${currentMonth}. Use real-time data.`;
-
-            try {
-                const { text, sources } = await callGeminiAPI(userQuery, systemPrompt);
-                reportContent.innerHTML = markdownToHtml(text);
-                sourcesList.innerHTML = sources.map((s, i) => `<li><a href="${s.uri}" target="_blank" class="text-emerald-600">${i+1}. ${s.title}</a></li>`).join('');
-                directionsLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedSpot)}`;
-                reportOutput.classList.remove('hidden');
-            } catch (error) {
-                errorMessageP.textContent = `Error: ${error.message}`;
-                errorMessageDiv.classList.remove('hidden');
-            } finally {
-                loadingState.classList.add('hidden');
-                generateBtn.disabled = false;
-                lucide.createIcons();
-            }
-        };
-
-        spotSelect.innerHTML = FISHING_SPOTS.map(s => `<option value="${s}">${s}</option>`).join('');
-        generateBtn.addEventListener('click', generateReport);
-        lucide.createIcons();
-    </script>
+    spotSelect.innerHTML = FISHING_SPOTS.map(s => `<option value="${s}">${s}</option>`).join('');
+    generateBtn.addEventListener('click', generateReport);
+    lucide.createIcons();
+</script>
 </body>
 </html>
-
